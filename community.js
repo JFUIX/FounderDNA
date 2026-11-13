@@ -1,166 +1,312 @@
 'use strict';
-(async function () {
-  const $ = (selector) => document.querySelector(selector);
-  const config = window.FOUNDERDNA_COMMUNITY || {};
-  const live = Boolean(config.supabaseUrl && config.supabasePublishableKey);
-  const storageKey = 'founderdna-community-preview-v1';
-  const categories = ['Launch', 'Customers', 'Product', 'Team', 'Funding', 'Learning'];
-  const samples = [
-    {id:'sample-1',business:'Northline Studio',category:'Launch',headline:'From side project to opening day.',story:'After six months of testing, our independent design studio is open. Three projects, a tiny team, and a lot to learn.\n\nIf you have launched a service business, what helped you find your first customers?',author_name:'Alex / Founder',created_at:'2026-11-13T09:00:00Z',sample:true},
-    {id:'sample-2',business:'Goodroot',category:'Customers',headline:'Our first 50 customers. Every conversation mattered.',story:'We started with a simple idea: make it easier for small cafes to source locally. Today, 50 cafes use our directory.\n\nThe biggest lesson? Pick up the phone before building another feature.',author_name:'Sam / Co-founder',created_at:'2026-11-12T10:00:00Z',sample:true},
-    {id:'sample-3',business:'Parallel Works',category:'Product',headline:'The beta is out in the world.',story:'We sent the first version of our planning tool to 12 small teams. It is early, and the feedback is already changing our roadmap.\n\nHow do you decide which feedback to act on first?',author_name:'Jordan / Builder',created_at:'2026-11-11T10:00:00Z',sample:true}
-  ];
-  let db, user, posts = [], filter = 'All', offset = 0, hasMore = false, loading = false;
-  let preview = {posts:[],comments:[]};
-  let toastTimer;
-  function notify(message) { $('#toast').textContent = message; $('#toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 7000); }
-  function node(tag, className, text) { const n = document.createElement(tag); if (className) n.className = className; if (text !== undefined) n.textContent = text; return n; }
-  function date(value) { return new Date(value).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}); }
-  function savePreview() { try { localStorage.setItem(storageKey, JSON.stringify(preview)); } catch { throw new Error('Browser storage is unavailable or full. Your change was not saved.'); } }
-  function readPreview() {
-    try {
-      const data = JSON.parse(localStorage.getItem(storageKey) || 'null');
-      if (data && Array.isArray(data.posts) && Array.isArray(data.comments)) {
-        preview.posts = data.posts.filter(p => p && typeof p.id === 'string' && typeof p.business === 'string' && typeof p.headline === 'string' && typeof p.story === 'string' && categories.includes(p.category) && Number.isFinite(Date.parse(p.created_at)));
-        preview.comments = data.comments.filter(c => c && typeof c.id === 'string' && typeof c.post_id === 'string' && typeof c.body === 'string' && typeof c.author_name === 'string' && Number.isFinite(Date.parse(c.created_at)));
-      }
-    } catch { notify('Browser storage is unavailable. Preview changes may not survive a refresh.'); }
+(async () => {
+  const $ = s => document.querySelector(s);
+  const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls)n.className=cls; if(text!==undefined)n.textContent=text; return n; };
+  const config=window.FOUNDERDNA_COMMUNITY||{};
+  const live=Boolean(config.supabaseUrl&&config.supabasePublishableKey);
+  const categories=['Launch','Customers','Product','Team','Funding','Learning'];
+  const fields=['business','category','headline','story'];
+  const uuid=s=>typeof s==='string'&&/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(s);
+  const params=new URLSearchParams(location.search);
+  const selectedPost=uuid(params.get('post'))?params.get('post'):null;
+  const selectedBusiness=uuid(params.get('business'))?params.get('business'):null;
+  const draftKey='founderdna-milestone-draft-v2';
+  const previewKey='founderdna-community-preview-v1';
+  const date=s=>new Date(s).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  let db,user=null,posts=[],profiles={},ownProfile=null,blocks=[],inbox=[],filter='All',offset=0,hasMore=false,loading=false,request=0,editing=null,reportTarget=null;
+  let toastTimer,searchTimer,preview={posts:[],comments:[]};
+  const ok=result=>{if(result.error)throw result.error;return result.data;};
+  function notify(text){$('#toast').textContent=text;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('#toast').hidden=true;},7000);}
+  function button(text,cls,handler){const b=el('button',cls,text);b.type='button';b.onclick=handler;return b;}
+  function profileName(id,fallback){return profiles[id]?.founder_name||fallback||'Community member';}
+  function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))||fallback;}catch{return fallback;}}
+  function writePreview(){try{localStorage.setItem(previewKey,JSON.stringify(preview));}catch{throw Error('Browser storage is full or unavailable. Your change was not saved.');}}
+  function draftPayload(){return Object.fromEntries(fields.map(id=>[id,$('#'+id).value]));}
+  function saveDraft(){
+    const draft={...draftPayload(),owner:user?.id||null,editing,at:Date.now()};
+    try{localStorage.setItem(draftKey,JSON.stringify(draft));$('#draft-status').textContent='Draft saved on this device for 7 days.';return true;}
+    catch{$('#draft-status').textContent='Draft could not be saved on this device. Keep a copy before leaving.';return false;}
   }
-  function updateAccount() { $('#account').textContent = live && user ? 'Sign out' : live ? 'Sign in' : 'Preview mode'; }
-  function openAuth() { $('#auth-status').textContent = ''; $('#auth').showModal(); }
-  $('#auth .close').onclick = () => $('#auth').close();
-  $('#account').onclick = async () => {
-    if (!live) { notify('This is a local preview. Public accounts become available when Supabase is connected.'); return; }
-    if (user) { const {error} = await db.auth.signOut(); if (error) notify(error.message); else {user = null; updateAccount(); render(); notify('Signed out.');} } else openAuth();
+  function restoreDraft(){
+    const d=readJSON(draftKey,null);
+    if(!d||typeof d.at!=='number')return;
+    if(Date.now()-d.at>7*86400000){try{localStorage.removeItem(draftKey);}catch{}return;}
+    if(d.owner&&d.owner!==user?.id)return;
+    const limits={business:80,category:20,headline:120,story:2000};
+    for(const id of fields)if(typeof d[id]==='string'&&(id!=='category'||categories.includes(d[id])))$('#'+id).value=d[id].slice(0,limits[id]);
+    if(d.editing&&d.owner===user?.id&&uuid(d.editing))editing=d.editing;
+    updateComposer();$('#draft-status').textContent='Your saved draft has been restored. Nothing has been published.';
+  }
+  function resetComposer(clearBusiness=false){
+    editing=null;$('#headline').value='';$('#story').value='';$('#category').value='Launch';
+    if(clearBusiness)$('#business').value='';
+    try{localStorage.removeItem(draftKey);}catch{}
+    $('#draft-status').textContent='Drafts save on this device for 7 days.';updateComposer();
+  }
+  function updateComposer(){
+    $('#composer-title').textContent=editing?'Edit your milestone':'What moved forward?';
+    $('#publish').textContent=editing?'Save changes':live?'Publish milestone ↗':'Save preview milestone ↗';
+    $('#cancel-edit').hidden=!editing;
+  }
+  fields.forEach(id=>$('#'+id).addEventListener('input',saveDraft));
+  $('#clear-draft').onclick=()=>{if(confirm('Clear the milestone draft saved on this device?'))resetComposer(true);};
+  $('#cancel-edit').onclick=()=>{if(confirm('Discard your unsaved edits?'))resetComposer();};
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).close());
+  $('#auth .close').onclick=()=>$('#auth').close();
+  function updateAccount(){
+    $('#account').textContent=user?'Sign out':live?'Sign in':'Preview mode';
+    $('#profile-button').hidden=!user;$('#inbox-button').hidden=!user;
+  }
+  function openAuth(){saveDraft();$('#auth-status').textContent='';$('#auth').showModal();}
+  $('#account').onclick=async()=>{
+    if(!live){notify('Local preview: accounts are available after a public connection is configured.');return;}
+    if(!db){notify('Sign-in is still loading. Please try again shortly.');return;}
+    if(!user){openAuth();return;}
+    try{ok(await db.auth.signOut());user=null;ownProfile=null;blocks=[];inbox=[];resetComposer(true);updateAccount();await load();notify('Signed out.');}catch(e){notify(e.message);}
   };
-  $('#auth-form').onsubmit = async (event) => {
-    event.preventDefault();
-    if (!db) return;
-    const button = event.submitter; button.disabled = true;
-    try {
-      const name = $('#display-name').value.trim(); if (!name) throw new Error('Please enter your name.');
-      const {error} = await db.auth.signInWithOtp({email:$('#email').value.trim(),options:{emailRedirectTo:location.origin + location.pathname,data:{display_name:name}}});
-      if (error) throw error;
-      $('#auth-status').textContent = 'Check your inbox for a sign-in link. Your email stays private; your name appears with posts and replies.';
-    } catch (error) { $('#auth-status').textContent = error.message; } finally { button.disabled = false; }
+  $('#auth-form').onsubmit=async e=>{
+    e.preventDefault();if(!db)return;
+    const submit=e.submitter||$('#auth-form button[type="submit"]');submit.disabled=true;
+    try{
+      const name=$('#display-name').value.trim();if(!name)throw Error('Please enter your public name.');
+      ok(await db.auth.signInWithOtp({email:$('#email').value.trim(),options:{emailRedirectTo:location.origin+location.pathname,data:{display_name:name}}}));
+      $('#auth-status').textContent='Check your inbox for a sign-in link. Your milestone draft is saved on this device. Your public name appears with posts and replies; your email stays private.';
+    }catch(err){$('#auth-status').textContent=err.message;}finally{submit.disabled=false;}
   };
-  async function load(reset = true) {
-    if (loading) return;
-    loading = true; $('#refresh').disabled = true; $('#more').disabled = true;
-    try {
-      if (live) {
-        const start = reset ? 0 : offset;
-        const {data,error} = await db.from('milestones').select('*').order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+29);
-        if (error) throw error;
-        posts = reset ? data : [...posts,...data.filter(p => !posts.some(old => old.id === p.id))]; offset = start + data.length; hasMore = data.length === 30;
-      } else { posts = [...preview.posts,...samples].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)); }
+  async function identity(){
+    if(!user||!db){ownProfile=null;blocks=[];inbox=[];updateAccount();return;}
+    const id=user.id;
+    try{
+      const [p,b]=await Promise.all([db.from('business_profiles').select('*').eq('user_id',id),db.from('community_blocks').select('blocked_id').eq('blocker_id',id)]);
+      if(user?.id!==id)return;
+      ownProfile=ok(p)?.[0]||null;blocks=ok(b).map(x=>x.blocked_id);
+      if(ownProfile){profiles[id]=ownProfile;if(!$('#business').value)$('#business').value=ownProfile.business;}
+      restoreDraft();await refreshInbox();
+    }catch(e){notify('Account settings could not load: '+e.message);}updateAccount();
+  }
+  function hideBlocked(query,column='user_id'){return blocks.length?query.not(column,'in','('+blocks.join(',')+')'):query;}
+  async function load(reset=true){
+    if(!reset&&loading)return;
+    const version=++request;loading=true;$('#refresh').disabled=true;$('#more').disabled=true;
+    try{
+      let rows;
+      const start=reset?0:offset;
+      if(live){
+        let query=db.from('milestones').select('id,user_id,business,author_name,category,headline,story,created_at,updated_at,milestone_comments(count)').order('created_at',{ascending:false}).order('id',{ascending:false});
+        if(selectedPost)query=query.eq('id',selectedPost);
+        if(selectedBusiness)query=query.eq('user_id',selectedBusiness);
+        if(filter!=='All')query=query.eq('category',filter);
+        const q=$('#search').value.trim();if(q)query=query.textSearch('search_document',q,{type:'websearch',config:'english'});
+        rows=ok(await hideBlocked(query).range(start,start+29));
+        if(version!==request)return;
+        const ids=[...new Set(rows.map(p=>p.user_id).filter(Boolean))];
+        if(selectedBusiness&&!ids.includes(selectedBusiness))ids.push(selectedBusiness);
+        if(ids.length){const result=await db.from('business_profiles').select('*').in('user_id',ids);if(!result.error)(result.data||[]).forEach(p=>profiles[p.user_id]=p);}
+      }else{
+        const q=$('#search').value.trim().toLowerCase();
+        rows=preview.posts.filter(p=>(filter==='All'||p.category===filter)&&[p.business,p.headline,p.story].join(' ').toLowerCase().includes(q));
+      }
+      if(version!==request)return;
+      posts=reset?rows:[...posts,...rows.filter(p=>!posts.some(old=>old.id===p.id))];offset=start+rows.length;hasMore=live&&!selectedPost&&rows.length===30;
       render();
-    } catch (error) { if (!posts.length) $('#posts').replaceChildren(node('div','empty','The feed could not load. Use Refresh to try again.')); notify('Could not load milestones: '+error.message); }
-    finally { loading = false; $('#refresh').disabled = false; $('#more').disabled = false; }
+      if(selectedPost&&posts[0]){const thread=$('.post .thread');thread.hidden=false;$('.conversation-button').setAttribute('aria-expanded','true');await loadThread(thread,posts[0]);}
+    }catch(e){if(version===request){if(!posts.length)$('#posts').replaceChildren(el('div','empty','The feed could not load. Use Refresh to try again.'));notify('Could not load milestones: '+e.message);}}
+    finally{if(version===request){loading=false;$('#refresh').disabled=false;$('#more').disabled=false;}}
   }
-  function render() {
-    const q = $('#search').value.trim().toLowerCase();
-    const visible = posts.filter(p => (filter === 'All' || p.category === filter) && [p.business,p.headline,p.story].join(' ').toLowerCase().includes(q));
-    $('#posts').replaceChildren(...visible.map(postCard));
-    if (!visible.length) $('#posts').append(node('div','empty',posts.length ? 'No matches in the loaded milestones. Try another search or load more.' : 'Be the first to share a milestone. Every step counts.'));
-    $('#more').hidden = !live || !hasMore;
+  function render(){
+    $('#posts').replaceChildren(...posts.map(postCard));
+    if(!posts.length){const box=el('div','empty',selectedPost?'This milestone is unavailable or hidden.':filter!=='All'||$('#search').value.trim()?'No milestones match this search. Try another term or category.':'The community is just getting started. Share a milestone to start the first conversation.');if(!selectedPost)box.append(button('Share a milestone','primary',()=>{$('#business').focus();$('#composer').scrollIntoView();}));$('#posts').append(box);}
+    $('#more').hidden=!hasMore;
+    if(selectedPost||selectedBusiness){const context=$('#route-context');context.hidden=false;context.replaceChildren(el('span','',selectedBusiness?'Milestones from '+(profiles[selectedBusiness]?.business||'this member')+' · ': 'Viewing one milestone · '));const a=el('a','','Back to all milestones →');a.href='./community.html';context.append(a);}
   }
-  function postCard(post) {
-    const article = node('article','panel post');
-    const top = node('div','post-top');
-    const identity = node('div','post-identity'); identity.append(node('strong','',post.business));
-    identity.append(node('div','post-meta',(post.sample?'Fictional example':post.author_name || 'Community member')+' · '+date(post.created_at)));
-    top.append(node('div','avatar business-avatar',post.business.slice(0,2).toUpperCase()),identity,node('span','badge',post.category));
-    article.append(top,node('h3','',post.headline),node('p','post-body',post.story));
-    const actions = node('div','post-actions'); const toggle = node('button','conversation-button','Join the conversation ↗'); toggle.type = 'button'; toggle.setAttribute('aria-expanded','false');
-    const thread = node('div','thread'); thread.hidden = true; thread.id = 'thread-'+post.id; toggle.setAttribute('aria-controls',thread.id);
-    toggle.onclick = async () => { thread.hidden = !thread.hidden; toggle.setAttribute('aria-expanded',String(!thread.hidden)); if (!thread.hidden) await loadThread(thread,post); };
-    actions.append(toggle);
-    if (!post.sample && (!live || user?.id === post.user_id)) {
-      const remove = node('button','text-button','Delete post'); remove.type = 'button';
-      remove.onclick = async () => {
-        if (!confirm('Delete this milestone and its replies?')) return;
-        remove.disabled = true;
-        try {
-          if (live) { const {error} = await db.from('milestones').delete().eq('id',post.id); if (error) throw error; }
-          else { const before = structuredClone(preview); preview.posts = preview.posts.filter(p => p.id !== post.id); preview.comments = preview.comments.filter(c => c.post_id !== post.id); try { savePreview(); } catch (e) { preview = before; throw e; } }
-          await load(); notify('Milestone deleted.');
-        } catch (error) { notify(error.message); remove.disabled = false; }
-      }; actions.append(remove);
+  async function share(post){
+    const url=new URL('community.html',location.href);url.searchParams.set('post',post.id);
+    try{await navigator.clipboard.writeText(url.href);notify('Milestone link copied.');}catch{prompt('Copy this milestone link:',url.href);}
+  }
+  function editPost(post){
+    if(live&&user?.id!==post.user_id)return;
+    if(($('#headline').value.trim()||$('#story').value.trim())&&!confirm('Replace your current draft with this milestone?'))return;
+    fields.forEach(id=>$('#'+id).value=post[id]);editing=post.id;saveDraft();updateComposer();$('#composer').scrollIntoView();$('#headline').focus();
+  }
+  function conversationLabel(post){const count=post.milestone_comments?.[0]?.count??preview.comments.filter(c=>c.post_id===post.id).length;return count?count+' '+(count===1?'reply':'replies')+' · Join conversation':'Start the conversation ↗';}
+  function postCard(post){
+    const article=el('article','panel post');article.id='post-'+post.id;
+    const top=el('div','post-top'),identityEl=el('div','post-identity');
+    const business=button(post.business,'business-link',()=>showProfile(post.user_id,post));identityEl.append(business);
+    identityEl.append(el('div','post-meta',profileName(post.user_id,post.author_name)+' · '+date(post.created_at)+(post.updated_at?' · Edited':'')));
+    top.append(el('div','avatar business-avatar',post.business.slice(0,2).toUpperCase()),identityEl,el('span','badge',post.category));
+    article.append(top,el('h3','',post.headline),el('p','post-body',post.story));
+    const actions=el('div','post-actions');
+    const thread=el('div','thread');thread.hidden=true;thread.id='thread-'+post.id;
+    const toggle=button(conversationLabel(post),'conversation-button',async()=>{thread.hidden=!thread.hidden;toggle.setAttribute('aria-expanded',String(!thread.hidden));if(!thread.hidden)await loadThread(thread,post);});toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',thread.id);actions.append(toggle);
+    const controls=el('div','post-controls');controls.append(button('Copy link','text-button',()=>share(post)));
+    if(!live||user?.id===post.user_id){
+      controls.append(button('Edit','text-button',()=>editPost(post)));
+      controls.append(button('Delete','text-button',async e=>{
+        if(!confirm('Delete this milestone and all its replies?'))return;const b=e.currentTarget;b.disabled=true;
+        try{
+          if(live){const data=ok(await db.from('milestones').delete().eq('id',post.id).select('id'));if(!data?.length)throw Error('This milestone could not be deleted. Please sign in again.');}
+          else{const before=structuredClone(preview);preview.posts=preview.posts.filter(p=>p.id!==post.id);preview.comments=preview.comments.filter(c=>c.post_id!==post.id);try{writePreview();}catch(e){preview=before;throw e;}}
+          if(editing===post.id)resetComposer();await load();notify('Milestone deleted.');
+        }catch(err){notify(err.message);b.disabled=false;}
+      }));
+    }else{
+      controls.append(button('Report','text-button',()=>openReport({post_id:post.id})));
+      controls.append(button('Hide member','text-button',()=>blockMember(post.user_id)));
     }
-    article.append(actions,thread); return article;
+    actions.append(controls);article.append(actions,thread);return article;
   }
-  async function loadThread(thread,post) {
-    thread.replaceChildren(node('p','','Loading conversation...'));
-    try {
-      let comments;
-      if (live) { const {data,error} = await db.from('milestone_comments').select('*').eq('post_id',post.id).order('created_at',{ascending:true}).limit(200); if (error) throw error; comments = data; }
-      else comments = preview.comments.filter(c => c.post_id === post.id);
-      thread.replaceChildren();
-      if (!comments.length) thread.append(node('p','','No replies yet. Start the conversation.'));
-      if (comments.length === 200) thread.append(node('p','','Showing the first 200 replies.'));
-      for (const comment of comments) {
-        const reply = node('div','reply'); reply.append(node('strong','',comment.author_name),node('p','',comment.body));
-        const time = node('time','',date(comment.created_at)); time.dateTime = comment.created_at; reply.append(time);
-        if (!live || user?.id === comment.user_id) {
-          const remove = node('button','text-button','Delete reply'); remove.type = 'button'; remove.onclick = async () => {
-            remove.disabled = true;
-            try {
-              if (live) { const {error} = await db.from('milestone_comments').delete().eq('id',comment.id); if (error) throw error; }
-              else { const before = structuredClone(preview); preview.comments = preview.comments.filter(c => c.id !== comment.id); try { savePreview(); } catch(e) { preview = before; throw e; } }
-              await loadThread(thread,post);
-            } catch(error) { notify(error.message); remove.disabled = false; }
-          }; reply.append(remove);
-        }
-        thread.append(reply);
+  const replyDraftKey=post=>'founderdna-reply-draft-'+(user?.id||'guest')+'-'+post.id;
+  async function loadThread(thread,post){
+    thread.replaceChildren(el('p','','Loading conversation...'));
+    const list=el('div'),more=button('Load older replies','outline',()=>read(false));let count=0,busy=false;
+    async function read(reset){
+      if(busy)return;busy=true;more.disabled=true;
+      try{
+        let comments;
+        if(live){const start=reset?0:count;comments=ok(await hideBlocked(db.from('milestone_comments').select('*').eq('post_id',post.id).order('created_at',{ascending:false}).order('id',{ascending:false})).range(start,start+49));}
+        else comments=preview.comments.filter(c=>c.post_id===post.id).slice().reverse();
+        if(reset){list.replaceChildren();count=0;}count+=comments.length;
+        comments.forEach(c=>list.append(replyCard(c,post,()=>loadThread(thread,post))));more.hidden=!live||comments.length<50;
+        if(!count)list.append(el('p','','No replies yet. Start the conversation.'));
+      }catch(e){list.replaceChildren(el('p','','Replies could not load. Close and reopen the conversation to retry.'));notify(e.message);}finally{busy=false;more.disabled=false;}
+    }
+    thread.replaceChildren(el('small','muted','Newest replies first'),list,more);
+    await read(true);
+    if(live&&!user){thread.append(button('Sign in to reply','outline',openAuth));return;}
+    const form=el('form','reply-form');
+    if(!live){const label=el('label','','Your name'),input=el('input');input.name='author';input.required=true;input.maxLength=60;label.append(input);form.append(label);}
+    const label=el('label','','Add a public reply'),body=el('textarea');body.name='body';body.required=true;body.maxLength=1000;body.rows=3;label.append(body);
+    const saved=readJSON(replyDraftKey(post),null);if(saved&&Date.now()-saved.at>7*86400000){try{localStorage.removeItem(replyDraftKey(post));}catch{}}if(saved&&typeof saved.body==='string'&&typeof saved.at==='number'&&Date.now()-saved.at<7*86400000)body.value=saved.body.slice(0,1000);
+    const status=el('small','muted','Your public name appears with your reply.');
+    body.oninput=()=>{try{localStorage.setItem(replyDraftKey(post),JSON.stringify({body:body.value,at:Date.now()}));status.textContent='Reply draft saved on this device for 7 days.';}catch{status.textContent='Reply draft could not be saved. Keep this page open.';}};
+    const send=el('button','primary',live?'Post reply':'Save preview reply');send.type='submit';form.append(label,status,send);
+    form.onsubmit=async e=>{
+      e.preventDefault();const text=body.value.trim();if(!text)return;
+      if(live&&!user){openAuth();return;}send.disabled=true;
+      try{
+        const author=live?(ownProfile?.founder_name||user.user_metadata?.display_name||'Community member'):form.elements.author.value.trim();if(!author)throw Error('Please enter your name.');
+        const comment={post_id:post.id,body:text,author_name:author};
+        if(live)ok(await db.from('milestone_comments').insert({...comment,user_id:user.id}));
+        else{preview.comments.push({...comment,id:crypto.randomUUID(),created_at:new Date().toISOString()});try{writePreview();}catch(e){preview.comments.pop();throw e;}}
+        try{localStorage.removeItem(replyDraftKey(post));}catch{}
+        await loadThread(thread,post);const count=post.milestone_comments?.[0];if(count)count.count+=1;
+        const toggle=thread.closest('article').querySelector('.conversation-button');if(toggle)toggle.textContent=conversationLabel(post);notify(live?'Your reply is public.':'Reply saved in this browser only.');
+      }catch(err){notify(err.message);send.disabled=false;}
+    };thread.append(form);
+  }
+  function replyCard(comment,post,refresh){
+    const reply=el('div','reply');reply.append(button(comment.author_name,'business-link',()=>showProfile(comment.user_id,{business:comment.author_name,author_name:comment.author_name})),el('p','',comment.body));
+    const time=el('time','',date(comment.created_at));time.dateTime=comment.created_at;reply.append(time);
+    if(!live||user?.id===comment.user_id)reply.append(button('Delete reply','text-button',async e=>{
+      if(!confirm('Delete this reply?'))return;const b=e.currentTarget;b.disabled=true;
+      try{
+        if(live){const data=ok(await db.from('milestone_comments').delete().eq('id',comment.id).select('id'));if(!data?.length)throw Error('This reply could not be deleted.');}
+        else{const before=structuredClone(preview);preview.comments=preview.comments.filter(c=>c.id!==comment.id);try{writePreview();}catch(e){preview=before;throw e;}}
+        if(post.milestone_comments?.[0])post.milestone_comments[0].count=Math.max(0,post.milestone_comments[0].count-1);
+        const toggle=reply.closest('article')?.querySelector('.conversation-button');if(toggle)toggle.textContent=conversationLabel(post);
+        await refresh();
+      }catch(err){notify(err.message);b.disabled=false;}
+    }));
+    else{reply.append(button('Report','text-button',()=>openReport({comment_id:comment.id})),button('Hide member','text-button',()=>blockMember(comment.user_id)));}
+    return reply;
+  }
+  $('#post-form').onsubmit=async e=>{
+    e.preventDefault();saveDraft();
+    if(live&&!user){openAuth();return;}
+    const data=draftPayload();fields.forEach(k=>data[k]=data[k].trim());if(fields.some(k=>!data[k])){notify('Please complete your business name, headline, and story.');return;}
+    $('#publish').disabled=true;
+    try{
+      const wasEditing=Boolean(editing);
+      if(live){
+        if(editing){const result=ok(await db.from('milestones').update(data).eq('id',editing).eq('user_id',user.id).select('id'));if(!result?.length)throw Error('This milestone cannot be edited. It may have been deleted or belong to another account.');}
+        else ok(await db.from('milestones').insert({...data,user_id:user.id,author_name:ownProfile?.founder_name||user.user_metadata?.display_name||'Community member'}));
+      }else{
+        const before=structuredClone(preview);
+        if(editing){const p=preview.posts.find(p=>p.id===editing);if(!p)throw Error('The preview milestone no longer exists.');Object.assign(p,data,{updated_at:new Date().toISOString()});}
+        else preview.posts.unshift({...data,id:crypto.randomUUID(),created_at:new Date().toISOString(),author_name:'You / Local preview'});
+        try{writePreview();}catch(err){preview=before;throw err;}
       }
-      if (live && !user) { const signIn = node('button','outline','Sign in to reply'); signIn.type = 'button'; signIn.onclick = openAuth; thread.append(signIn); return; }
-      const form = node('form','reply-form');
-      if (!live) { const label = node('label','','Your name'); const input = node('input'); input.name = 'author'; input.required = true; input.maxLength = 60; input.autocomplete = 'name'; label.append(input); form.append(label); }
-      const label = node('label','',live ? 'Add to the conversation' : 'Try a reply (saved only in this browser)');
-      const body = node('textarea'); body.required = true; body.maxLength = 1000; body.name = 'body'; body.rows = 2; label.append(body);
-      const send = node('button','primary',live?'Post reply':'Save preview reply'); send.type = 'submit'; form.append(label,send);
-      form.onsubmit = async (event) => {
-        event.preventDefault(); const text = body.value.trim(); if (!text) {body.focus(); return;} send.disabled = true;
-        try {
-          const author = live ? (user.user_metadata?.display_name || 'Community member') : form.elements.author.value.trim(); if (!author) throw new Error('Please enter your name.');
-          const comment = {post_id:post.id,body:text,author_name:author};
-          if (live) { const {error} = await db.from('milestone_comments').insert({...comment,user_id:user.id}); if (error) throw error; }
-          else { preview.comments.push({...comment,id:crypto.randomUUID(),created_at:new Date().toISOString()}); try {savePreview();} catch(e) {preview.comments.pop(); throw e;} }
-          await loadThread(thread,post); notify(live?'Reply posted.':'Preview reply saved in this browser only.');
-        } catch(error) { notify(error.message); send.disabled = false; }
-      }; thread.append(form);
-    } catch(error) { thread.replaceChildren(node('p','','Could not load replies. Close and reopen the conversation to retry.')); notify(error.message); }
-  }
-  $('#post-form').onsubmit = async (event) => {
-    event.preventDefault();
-    if (live && !user) {openAuth(); return;}
-    const post = {business:$('#business').value.trim(),category:$('#category').value,headline:$('#headline').value.trim(),story:$('#story').value.trim()};
-    if (!post.business || !post.headline || !post.story) { notify('Please complete your business name, headline, and story.'); return; }
-    $('#publish').disabled = true;
-    try {
-      if (live) { const {error} = await db.from('milestones').insert({...post,user_id:user.id,author_name:user.user_metadata?.display_name || 'Community member'}); if (error) throw error; }
-      else { preview.posts.unshift({...post,id:crypto.randomUUID(),created_at:new Date().toISOString(),author_name:'You / Local preview'}); try {savePreview();} catch(e) {preview.posts.shift(); throw e;} }
-      $('#headline').value = ''; $('#story').value = ''; filter = 'All'; $('#search').value = ''; updateFilters(); await load(); $('#feed').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}); notify(live?'Your milestone is now public.':'Preview milestone saved in this browser only.');
-    } catch(error) { notify('Could not save milestone: '+error.message); } finally { $('#publish').disabled = false; }
+      resetComposer();filter='All';$('#search').value='';updateFilters();await load();$('#feed').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});notify(live?(wasEditing?'Milestone updated.':'Your milestone is now public.'):'Preview saved in this browser only.');
+    }catch(err){notify('Could not save milestone: '+err.message);}finally{$('#publish').disabled=false;}
   };
-  function updateFilters() { document.querySelectorAll('[data-filter]').forEach(b => {b.classList.toggle('selected',b.dataset.filter === filter); b.setAttribute('aria-pressed',String(b.dataset.filter === filter));}); }
-  document.querySelectorAll('[data-filter]').forEach(b => {b.onclick = () => {filter = b.dataset.filter; updateFilters(); render();};});
-  $('#search').oninput = render; $('#refresh').onclick = () => load(); $('#more').onclick = () => load(false);
-  if (!live) {
-    readPreview(); $('#connection').textContent = 'LOCAL PREVIEW / Example businesses are fictional. Your posts and replies stay in this browser and are not visible to other people. Public posting and sign-in are not connected yet.';
-    $('#publish').textContent = 'Save preview milestone ↗'; $('#post-hint').textContent = 'Saved on this device only. This does not publish a public post.'; updateAccount(); await load(); return;
+  async function showProfile(id,fallback={}){
+    const container=$('#profile-content');container.replaceChildren(el('p','','Loading business profile...'));$('#profile-view').showModal();
+    try{
+      if(live&&id&&!profiles[id]){const data=ok(await db.from('business_profiles').select('*').eq('user_id',id));if(data[0])profiles[id]=data[0];}
+      const p=profiles[id];container.replaceChildren(el('span','eyebrow','BUSINESS PROFILE'),el('h2','',p?.business||fallback.business||'Community member'),el('p','',p?.founder_name||fallback.author_name||'Profile not set up yet.'),el('p','',p?.bio||'This member has not added a business description yet.'),el('small','muted','Business names and identities are self-described, not verified by FounderDNA.'));
+      if(p?.website){const url=new URL(p.website);if(url.protocol==='https:'){const a=el('a','outline','Visit website ↗');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';container.append(a);}}
+      if(uuid(id)){const a=el('a','primary','View all milestones →');a.href='./community.html?business='+encodeURIComponent(id);container.append(a);}
+    }catch(err){container.replaceChildren(el('p','','This profile could not load.'));notify(err.message);}
   }
-  try {
-    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.supabaseUrl)) throw new Error('Check the Supabase project URL in community-config.js.');
-    await new Promise((resolve,reject) => {const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.3/dist/umd/supabase.js'; script.onload = resolve; script.onerror = () => reject(new Error('The sign-in service could not load. Please refresh.')); document.head.append(script);});
-    db = window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
-    const {data,error} = await db.auth.getSession(); if (error) throw error; user = data.session?.user || null;
-    db.auth.onAuthStateChange((_event,session) => {user = session?.user || null; updateAccount(); if (user && $('#auth').open) $('#auth').close();});
-    // The SDK consumes the email link before the token fragment is removed.
-    if (location.hash.includes('access_token') || location.hash.includes('error_description')) history.replaceState(null,'',location.pathname+location.search);
-    $('#connection').textContent = 'PUBLIC COMMUNITY / Milestones and replies are visible to everyone. Sign in to post. Your email address is never shown.'; $('#connection').classList.add('live'); updateAccount(); await load();
-  } catch(error) {
-    $('#connection').textContent = 'Community connection unavailable: '+error.message; $('#publish').disabled = true; $('#account').disabled = true; $('#refresh').disabled = true; $('#posts').replaceChildren(node('div','empty','The public community is temporarily unavailable. Please try again later.'));
+  $('#profile-button').onclick=()=>{
+    if(!user){openAuth();return;}
+    $('#profile-name').value=ownProfile?.founder_name||user.user_metadata?.display_name||'';$('#profile-business').value=ownProfile?.business||$('#business').value;$('#profile-bio').value=ownProfile?.bio||'';$('#profile-website').value=ownProfile?.website||'';$('#profile-status').textContent='';$('#blocked-list').replaceChildren();$('#profile-editor').showModal();
+  };
+  $('#profile-form').onsubmit=async e=>{
+    e.preventDefault();if(!user||!db)return;const b=e.submitter||$('#profile-form button[type="submit"]');b.disabled=true;
+    try{
+      const data={business:$('#profile-business').value.trim(),founder_name:$('#profile-name').value.trim(),bio:$('#profile-bio').value.trim(),website:$('#profile-website').value.trim()};
+      if(!data.business||!data.founder_name)throw Error('Please add a business name and your public name.');
+      if(data.website){const url=new URL(data.website);if(url.protocol!=='https:'||url.username||url.password)throw Error('Use a website address starting with https://, without login details.');data.website=url.href;}
+      const query=ownProfile?db.from('business_profiles').update(data).eq('user_id',user.id):db.from('business_profiles').insert({...data,user_id:user.id});ok(await query);
+      ownProfile={...data,user_id:user.id};profiles[user.id]=ownProfile;if(!$('#business').value)$('#business').value=data.business;$('#profile-status').textContent='Your public business profile is saved.';render();
+    }catch(err){$('#profile-status').textContent=err.message;}finally{b.disabled=false;}
+  };
+  async function blockMember(id){
+    if(!user){openAuth();return;}if(!uuid(id)||id===user.id)return;
+    if(!confirm('Hide this member\'s posts and replies from your view? They can still see public content.'))return;
+    try{ok(await db.from('community_blocks').insert({blocker_id:user.id,blocked_id:id}));blocks.push(id);await load();await refreshInbox();notify('Member hidden. You can undo this in My business.');}catch(err){notify(err.message);}
   }
+  $('#manage-blocks').onclick=async()=>{
+    const container=$('#blocked-list');container.replaceChildren();if(!blocks.length){container.append(el('p','','No members hidden.'));return;}
+    try{
+      const data=ok(await db.from('business_profiles').select('*').in('user_id',blocks));data.forEach(p=>profiles[p.user_id]=p);
+      blocks.forEach(id=>{const row=el('div','notification');row.append(el('span','',profiles[id]?.business||'Community member'),button('Unhide','text-button',async()=>{try{ok(await db.from('community_blocks').delete().eq('blocker_id',user.id).eq('blocked_id',id));blocks=blocks.filter(x=>x!==id);row.remove();await load();notify('Member is visible again.');}catch(err){notify(err.message);}}));container.append(row);});
+    }catch(err){notify(err.message);}
+  };
+  function openReport(target){if(!user){openAuth();return;}reportTarget=target;$('#report-reason').value='';$('#report-status').textContent='';$('#report').showModal();}
+  $('#report-form').onsubmit=async e=>{
+    e.preventDefault();if(!user||!reportTarget)return;const b=e.submitter||$('#report-form button[type="submit"]');b.disabled=true;
+    try{const reason=$('#report-reason').value.trim();if(reason.length<5)throw Error('Please describe the issue in at least 5 characters.');ok(await db.from('community_reports').insert({...reportTarget,reporter_id:user.id,reason}));$('#report').close();notify('Your report has been saved for moderator review.');}catch(err){$('#report-status').textContent=err.message;}finally{b.disabled=false;}
+  };
+  async function refreshInbox(){
+    if(!user||!db)return;
+    const id=user.id;
+    try{
+      const data=ok(await hideBlocked(db.from('community_notifications').select('*,milestones(headline),milestone_comments(author_name)').eq('recipient_id',id),'actor_id').order('created_at',{ascending:false}).limit(50));
+      if(user?.id!==id)return;inbox=data;const unread=data.filter(n=>!n.read_at).length;$('#unread-count').textContent=unread?'('+unread+')':'';
+      const container=$('#notification-list');container.replaceChildren();
+      if(!data.length)container.append(el('p','','No reply notifications yet. Join a conversation or share a milestone to get started.'));
+      data.forEach(n=>{const row=el('div','notification'+(!n.read_at?' unread':''));const a=el('a','',(n.milestone_comments?.author_name||'A community member')+' replied to '+(n.milestones?.headline||'a milestone'));a.href='./community.html?post='+encodeURIComponent(n.post_id);row.append(a,el('time','',date(n.created_at)));container.append(row);});
+    }catch(err){if($('#inbox').open)notify('Notifications could not load: '+err.message);}
+  }
+  $('#inbox-button').onclick=async()=>{$('#inbox').showModal();await refreshInbox();};$('#refresh-inbox').onclick=refreshInbox;
+  $('#read-inbox').onclick=async()=>{
+    if(!user)return;const ids=inbox.filter(n=>!n.read_at).map(n=>n.id);if(!ids.length)return;
+    try{ok(await db.from('community_notifications').update({read_at:new Date().toISOString()}).in('id',ids));await refreshInbox();}catch(err){notify(err.message);}
+  };
+  function updateFilters(){document.querySelectorAll('[data-filter]').forEach(b=>{const active=b.dataset.filter===filter;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});}
+  document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;updateFilters();load();});
+  $('#search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>load(),300);};$('#refresh').onclick=()=>load();$('#more').onclick=()=>load(false);
+  if(!live){
+    const p=readJSON(previewKey,{});if(Array.isArray(p.posts))preview.posts=p.posts.filter(p=>p&&uuid(p.id)&&typeof p.business==='string'&&typeof p.headline==='string'&&typeof p.story==='string'&&categories.includes(p.category)&&Number.isFinite(Date.parse(p.created_at)));if(Array.isArray(p.comments))preview.comments=p.comments.filter(c=>c&&uuid(c.id)&&typeof c.post_id==='string'&&typeof c.body==='string'&&typeof c.author_name==='string'&&Number.isFinite(Date.parse(c.created_at)));
+    $('#connection').textContent='LOCAL PREVIEW / Posts and replies stay in this browser and are not visible to other people. Public accounts and business profiles are not connected.';$('#post-hint').textContent='Saved on this device only. This does not publish a public post.';restoreDraft();updateAccount();updateComposer();await load();return;
+  }
+  try{
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.supabaseUrl))throw Error('Invalid community service address.');
+    await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.3/dist/umd/supabase.js';s.onload=resolve;s.onerror=()=>reject(Error('The sign-in service could not load. Please refresh.'));document.head.append(s);});
+    db=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
+    const result=await db.auth.getSession();
+    if(result.error){notify('The sign-in link could not be used. Please request a new link.');user=null;}else user=result.data.session?.user||null;
+    db.auth.onAuthStateChange((_event,session)=>{
+      const next=session?.user||null;if(next?.id===user?.id)return;
+      user=next;updateAccount();if(user&&$('#auth').open)$('#auth').close();
+      setTimeout(async()=>{if(!user){ownProfile=null;blocks=[];inbox=[];resetComposer(true);}await identity();await load();},0);
+    });
+    if(location.hash.includes('access_token')||location.hash.includes('error_description'))history.replaceState(null,'',location.pathname+location.search);
+    restoreDraft();await identity();
+    $('#connection').textContent='PUBLIC COMMUNITY / Your name, business, milestones, and replies are visible to everyone. Email addresses stay private.';$('#connection').classList.add('live');updateAccount();updateComposer();await load();
+    setInterval(()=>{if(!document.hidden&&user)refreshInbox();},60000);
+  }catch(err){$('#connection').textContent='The community is temporarily unavailable. Please refresh to try again.';$('#publish').disabled=true;$('#account').disabled=true;$('#refresh').disabled=true;$('#posts').replaceChildren(el('div','empty','The public community could not load.'));notify(err.message);}
 })();
