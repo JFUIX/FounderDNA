@@ -236,14 +236,14 @@ body{background:#050505;color:#fff}h1,h2,h3{font-family:var(--display)!important
 <p>First time here? <a href="#guide" style="color:var(--ink)">Find your next step in the quick guide â†’</a></p>
 <div class="meta" style="margin-top:18px"><span>New ideas &amp; existing businesses</span><span>No account needed</span><span>Private by default</span></div>
 <div class="slider"><div aria-live="polite" class="sl-cap" id="cap"><b>01 / Find direction</b><h3>A clearer way forward.</h3><p>Work through the uncertainty. Leave with a practical next step.</p><a href="#intake">Start with your idea â†’</a></div>
-<div class="bar"><span id="n1">01</span><div class="tr"><i></i></div><span>03</span><button aria-label="Previous" id="pv" type="button">â†</button><button aria-label="Next" id="nx" type="button">â†’</button><button class="ps" id="ps" type="button">Pause rotation</button></div></div>
+<div class="bar"><span id="n1">01</span><div class="tr"><i></i></div><span>03</span><button aria-label="Previous" id="pv" type="button">â†</button><button aria-label="Next" id="nx" type="button">â†’</button></div></div>
 </div>
 </div>
 <div class="trio"><div><b>YOU SHARE</b>Your situation, your obstacle and the help you need.</div><div><b>YOU RECEIVE</b>A private brief and a practical starting action.</div><div><b>YOU CONTROL</b>Follow-up, public visibility and every introduction.</div></div>
 </div></section>
 <section id="paths"><div class="w"><div class="lbls"><span>Your ambition. Three connected paths.</span><h2>Three ways forward</h2></div>
 <div class="cf" id="cf"><div aria-label="01 / Find direction" class="cd" data-p="0" tabindex="0"><div class="sw"><div class="in"><small>01 / Find direction</small><svg aria-hidden="true" class="ic" fill="none" stroke="currentColor" stroke-width="1.3" viewbox="0 0 180 110"><circle cx="70" cy="55" r="44"></circle><circle cx="70" cy="55" r="30"></circle><circle cx="70" cy="55" r="16"></circle><g class="sweep"><path d="M70 55L150 14"></path></g><circle cx="70" cy="55" fill="#e10b0b" r="6" stroke="none"></circle></svg><h3>A clearer way forward.</h3><p>Work through the uncertainty. Leave with a practical next step.</p><a data-mode="Request support" href="#intake"><span>Start with your idea</span><span aria-hidden="true">â†’</span></a></div></div></div><div aria-label="02 / Find your people" class="cd" data-p="0" tabindex="0"><div class="sw"><div class="in"><small>02 / Find your people</small><svg aria-hidden="true" class="ic" fill="none" stroke="currentColor" stroke-width="1.3" viewbox="0 0 180 110"><path d="M52 62L60 50M100 44L140 56"></path><circle cx="34" cy="68" fill="rgba(255,255,255,.05)" r="24"></circle><circle cx="88" cy="46" fill="rgba(225,11,11,.22)" r="34"></circle><circle cx="148" cy="62" fill="rgba(255,255,255,.05)" r="22"></circle></svg><h3>Good people. Shared ambition.</h3><p>Find the skills and perspectives that complement what you bring.</p><a href="#explore"><span>Explore the people</span><span aria-hidden="true">â†’</span></a></div></div></div><div aria-label="03 / Gather support" class="cd" data-p="0" tabindex="0"><div class="sw"><div class="in"><small>03 / Gather support</small><svg aria-hidden="true" class="ic" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.3" viewbox="0 0 180 110"><path d="M26 70L54 64L56 96L28 100Z" fill="rgba(255,255,255,.05)"></path><path d="M68 54L102 46L104 96L70 100Z" fill="rgba(255,255,255,.07)"></path><path d="M114 24L154 14L156 94L116 100Z" fill="rgba(225,11,11,.25)"></path></svg><h3>Build something that matters.</h3><p>Give your project a clear purpose. Explore the support to move it forward.</p><a href="#funding"><span>Understand your options</span><span aria-hidden="true">â†’</span></a></div></div></div></div>
-<div class="cfc"><button aria-label="Previous path" id="cp" type="button">â†</button><button aria-label="Path 1" class="dt" type="button"></button><button aria-label="Path 2" class="dt" type="button"></button><button aria-label="Path 3" class="dt" type="button"></button><button aria-label="Next path" id="cn" type="button">â†’</button><button class="pz" id="cz" type="button">Pause rotation</button></div>
+<div class="cfc"><button aria-label="Previous path" id="cp" type="button">â†</button><button aria-label="Path 1" class="dt" type="button"></button><button aria-label="Path 2" class="dt" type="button"></button><button aria-label="Path 3" class="dt" type="button"></button><button aria-label="Next path" id="cn" type="button">â†’</button></div>
 <p class="cap2"><b class="red">Clarify the next step. Connect with purpose. Build with support.</b> One place. Three ways forward.</p></div></section>
 <section id="guide"><div class="w"><span class="tag">How to use FounderDNA</span><p class="editorial-line">START MESSY. GET CLEAR.</p><h2>You donâ€™t need all the answers. Just a place to start.</h2>
 <p style="margin-bottom:12px"><b style="color:var(--ink)">Choose a goal. Add context. Review your choices.</b> Choose what you want to do. Each guide takes you straight to the right place. No account needed. Business briefs take about 4â€“6 minutes. You can preview and download yours before adding contact details.</p>
@@ -342,8 +342,7 @@ var S=[["01 / Find direction","A clearer way forward.","Work through the uncerta
 function show(n){si=(n+3)%3;var c=S[si],e=$('#cap');e.innerHTML='<b></b><h3></h3><p></p><a></a>';e.children[0].textContent=c[0];e.children[1].textContent=c[1];e.children[2].textContent=c[2];e.children[3].textContent=c[3];e.children[3].href=c[4];$('#n1').textContent='0'+(si+1);$('.tr i').style.left=(si*33.33)+'%'}
 function run(){clearInterval(st);if(sp)st=setInterval(function(){show(si+1)},6000)}
 $('#pv').addEventListener('click',function(){show(si-1);run()});$('#nx').addEventListener('click',function(){show(si+1);run()});
-$('#ps').addEventListener('click',function(){sp=!sp;this.textContent=sp?'Pause rotation':'Play rotation';run()});
-if(!sp)$('#ps').textContent='Play rotation';run();
+run();
 
 
 document.addEventListener('pointermove',function(e){var b=e.target.closest&&e.target.closest('.btn');if(b){var r=b.getBoundingClientRect();b.style.setProperty('--x',(e.clientX-r.left)+'px');b.style.setProperty('--y',(e.clientY-r.top)+'px')}});
@@ -354,15 +353,14 @@ b.style.setProperty('--x',(x-r.left)+'px');b.style.setProperty('--y',(y-r.top)+'
 (function(){var cs=[].slice.call(document.querySelectorAll('.cd')),ds=[].slice.call(document.querySelectorAll('.dt')),cf=document.getElementById('cf'),a=1,pl=!matchMedia('(prefers-reduced-motion:reduce)').matches,hv=false,t;
 function pos(){cs.forEach(function(c,i){var p=(i-a+3)%3;if(p===2)p=-1;c.dataset.p=p});ds.forEach(function(d,i){d.classList.toggle('on',i===a)})}
 function go(n){a=(n+3)%3;pos()}
-function run(){clearInterval(t);if(pl&&!hv)t=setInterval(function(){go(a+1)},4500)}
+function run(){clearInterval(t);if(pl)t=setInterval(function(){go(a+1)},4500)}
 cs.forEach(function(c,i){c.addEventListener('click',function(e){if(a!==i){e.preventDefault();go(i);run()}});
 c.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target===c&&a!==i){e.preventDefault();go(i);run()}});
 var n=c.querySelector('.in');c.addEventListener('pointermove',function(e){if(a!==i)return;var r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;n.style.setProperty('--ry',(x*10)+'deg');n.style.setProperty('--rx',(-y*10)+'deg')});
 c.addEventListener('pointerleave',function(){n.style.setProperty('--rx','0deg');n.style.setProperty('--ry','0deg')})});
 ds.forEach(function(d,i){d.addEventListener('click',function(){go(i);run()})});
 document.getElementById('cp').addEventListener('click',function(){go(a-1);run()});document.getElementById('cn').addEventListener('click',function(){go(a+1);run()});
-var z=document.getElementById('cz');z.addEventListener('click',function(){pl=!pl;z.textContent=pl?'Pause rotation':'Play rotation';run()});if(!pl)z.textContent='Play rotation';
-cf.addEventListener('pointerenter',function(){hv=true;run()});cf.addEventListener('pointerleave',function(){hv=false;run()});
+
 pos();run()})();
 
 document.querySelectorAll('.card a').forEach(function(a){a.classList.add('btn','o')});
