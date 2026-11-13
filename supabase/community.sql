@@ -37,7 +37,9 @@ create policy "Public conversations" on public.milestone_comments for select to 
 create policy "Own replies only" on public.milestone_comments for insert to authenticated with check ((select auth.uid()) = user_id);
 create policy "Delete own replies" on public.milestone_comments for delete to authenticated using ((select auth.uid()) = user_id);
 -- Limit rapid repeat submissions and derive timestamps on the server.
-create function public.check_community_rate() returns trigger language plpgsql security definer set search_path = '' as $$
+create schema if not exists community_private;
+revoke all on schema community_private from public, anon, authenticated;
+create function community_private.check_community_rate() returns trigger language plpgsql security invoker set search_path = '' as $$
 declare recent_count integer;
 begin
   if new.user_id is distinct from auth.uid() then raise exception 'Please sign in again.'; end if;
@@ -53,7 +55,7 @@ begin
   return new;
 end;
 $$;
-revoke all on function public.check_community_rate() from public, anon, authenticated;
-create trigger check_milestone_rate before insert on public.milestones for each row execute function public.check_community_rate();
-create trigger check_comment_rate before insert on public.milestone_comments for each row execute function public.check_community_rate();
+revoke all on function community_private.check_community_rate() from public, anon, authenticated;
+create trigger check_milestone_rate before insert on public.milestones for each row execute function community_private.check_community_rate();
+create trigger check_comment_rate before insert on public.milestone_comments for each row execute function community_private.check_community_rate();
 commit;
