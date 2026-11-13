@@ -1,14 +1,14 @@
-# FounderDNA business-progress redesign — prepared for activation
+# FounderDNA business-progress service — activated
 
 This branch restores the service around Find Direction, Find People, and Gather Support. Community milestones are secondary. It does not fabricate experts, users, investments, or successful connections.
 
-## Production approval required
+## Activation status
 
-The proposed database migration was rejected by automatic approval review because it changes production access rules and queues existing milestones for moderation. The migration has not been applied. The existing website and production tables remain unchanged.
+The owner approved activation. The production migration has been applied, private reviewer access configured, and the redesign merged to main. Do not rerun the initialization migration. Its original automatic-review rejection was resolved by the owner's explicit approval.
 
 Review `supabase/business-service.sql` before approving. Read-only production inspection found **zero milestones and zero replies** when this change was prepared. Recheck immediately before activation. No accounts or existing content are deleted by this migration; any existing milestone would become pending review rather than public.
 
-## Concrete changes requiring approval
+## Approved and applied changes
 
 - Create private business requests, evolving FounderDNA context, request conversations, and introduction decisions.
 - Create a private PDF storage bucket with a 2 MB limit per file and owner/reviewer access rules.
@@ -18,7 +18,7 @@ Review `supabase/business-service.sql` before approving. Read-only production in
 
 No payment processing, paid project creation, external email sending, or automatic external introductions are included.
 
-## Activation order after approval
+## Activation record and future deployment order
 
 1. Recheck production counts and existing schema. Apply `supabase/business-service.sql` using the migration tool.
 2. Privately insert the owner's supplied reviewer email into `service_private.reviewer_emails` through the database tool. Do not put it into a tracked file or public page. Membership is checked against the actual confirmed email in `auth.users`, not editable user metadata.
@@ -55,4 +55,4 @@ Local Postgres (PGlite) tests apply the full base, community upgrade, and propos
 
 DOM interaction tests verify questionnaire validation, draft recovery through sign-in, receipt/error states, no automatic public publication, account-bound private drafts, and no upload without document permission. Source checks cover JavaScript syntax, links/assets/anchors, unique IDs, encoding, and selectors.
 
-Visual browser testing is unavailable in this session because the managed browser tool is absent. Live service verification is pending production approval and activation.
+Visual browser testing is unavailable in this session because the managed browser tool is absent. Live production database checks passed for submission receipts, owner isolation, verified reviewer access, status updates, and anonymous denial. All test records were rolled back. Full email-and-browser user journeys require a real signed-in session.
