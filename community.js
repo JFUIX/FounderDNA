@@ -44,8 +44,8 @@
     $('#draft-status').textContent='Drafts save on this device for 7 days.';updateComposer();
   }
   function updateComposer(){
-    $('#composer-title').textContent=editing?'Edit your milestone':'What moved forward?';
-    $('#publish').textContent=editing?'Save changes':live?'Publish milestone ↗':'Save preview milestone ↗';
+    $('#composer-title').textContent=editing?'Revise your milestone for review':'What moved forward?';
+    $('#publish').textContent=editing?'Save & request review':live?'Request publication review ↗':'Save preview milestone ↗';
     $('#cancel-edit').hidden=!editing;
   }
   fields.forEach(id=>$('#'+id).addEventListener('input',saveDraft));
@@ -92,7 +92,7 @@
       let rows;
       const start=reset?0:offset;
       if(live){
-        let query=db.from('milestones').select('id,user_id,business,author_name,category,headline,story,created_at,updated_at,milestone_comments(count)').order('created_at',{ascending:false}).order('id',{ascending:false});
+        let query=db.from('milestones').select('id,user_id,business,author_name,category,headline,story,created_at,updated_at,publication_status,milestone_comments(count)').order('created_at',{ascending:false}).order('id',{ascending:false});
         if(selectedPost)query=query.eq('id',selectedPost);
         if(selectedBusiness)query=query.eq('user_id',selectedBusiness);
         if(filter!=='All')query=query.eq('category',filter);
@@ -109,7 +109,7 @@
       if(version!==request)return;
       posts=reset?rows:[...posts,...rows.filter(p=>!posts.some(old=>old.id===p.id))];offset=start+rows.length;hasMore=live&&!selectedPost&&rows.length===30;
       render();
-      if(selectedPost&&posts[0]){const thread=$('.post .thread');thread.hidden=false;$('.conversation-button').setAttribute('aria-expanded','true');await loadThread(thread,posts[0]);}
+      if(selectedPost&&posts[0]&&posts[0].publication_status==='Approved'){const thread=$('.post .thread');thread.hidden=false;$('.conversation-button').setAttribute('aria-expanded','true');await loadThread(thread,posts[0]);}
     }catch(e){if(version===request){if(!posts.length)$('#posts').replaceChildren(el('div','empty','The feed could not load. Use Refresh to try again.'));notify('Could not load milestones: '+e.message);}}
     finally{if(version===request){loading=false;$('#refresh').disabled=false;$('#more').disabled=false;}}
   }
@@ -126,7 +126,7 @@
   function editPost(post){
     if(live&&user?.id!==post.user_id)return;
     if(($('#headline').value.trim()||$('#story').value.trim())&&!confirm('Replace your current draft with this milestone?'))return;
-    fields.forEach(id=>$('#'+id).value=post[id]);editing=post.id;saveDraft();updateComposer();$('#composer').scrollIntoView();$('#headline').focus();
+    fields.forEach(id=>$('#'+id).value=post[id]);$('#milestone-consent').checked=false;editing=post.id;saveDraft();updateComposer();$('#composer').scrollIntoView();$('#headline').focus();
   }
   function conversationLabel(post){const count=post.milestone_comments?.[0]?.count??preview.comments.filter(c=>c.post_id===post.id).length;return count?count+' '+(count===1?'reply':'replies')+' · Join conversation':'Start the conversation ↗';}
   function postCard(post){
@@ -136,9 +136,10 @@
     identityEl.append(el('div','post-meta',profileName(post.user_id,post.author_name)+' · '+date(post.created_at)+(post.updated_at?' · Edited':'')));
     top.append(el('div','avatar business-avatar',post.business.slice(0,2).toUpperCase()),identityEl,el('span','badge',post.category));
     article.append(top,el('h3','',post.headline),el('p','post-body',post.story));
+    if(live&&post.publication_status!=='Approved')article.append(el('p','notice',post.publication_status==='Declined'?'Publication was declined. You can revise and resubmit.':'Private to you and the review team. Awaiting publication review.'));
     const actions=el('div','post-actions');
     const thread=el('div','thread');thread.hidden=true;thread.id='thread-'+post.id;
-    const toggle=button(conversationLabel(post),'conversation-button',async()=>{thread.hidden=!thread.hidden;toggle.setAttribute('aria-expanded',String(!thread.hidden));if(!thread.hidden)await loadThread(thread,post);});toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',thread.id);actions.append(toggle);
+    const toggle=button(conversationLabel(post),'conversation-button',async()=>{thread.hidden=!thread.hidden;toggle.setAttribute('aria-expanded',String(!thread.hidden));if(!thread.hidden)await loadThread(thread,post);});toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',thread.id);if(live&&post.publication_status!=='Approved'){toggle.disabled=true;toggle.textContent='Awaiting review';}actions.append(toggle);
     const controls=el('div','post-controls');controls.append(button('Copy link','text-button',()=>share(post)));
     if(!live||user?.id===post.user_id){
       controls.append(button('Edit','text-button',()=>editPost(post)));
@@ -213,8 +214,9 @@
   }
   $('#post-form').onsubmit=async e=>{
     e.preventDefault();saveDraft();
+    if(!$('#milestone-consent').checked){notify('Please give explicit publication permission before submitting for review.');return;}
     if(live&&!user){openAuth();return;}
-    const data=draftPayload();fields.forEach(k=>data[k]=data[k].trim());if(fields.some(k=>!data[k])){notify('Please complete your business name, headline, and story.');return;}
+    const data=draftPayload();fields.forEach(k=>data[k]=data[k].trim());data.publication_consent=true;if(fields.some(k=>!data[k])){notify('Please complete your business name, headline, and story.');return;}
     $('#publish').disabled=true;
     try{
       const wasEditing=Boolean(editing);
@@ -227,7 +229,7 @@
         else preview.posts.unshift({...data,id:crypto.randomUUID(),created_at:new Date().toISOString(),author_name:'You / Local preview'});
         try{writePreview();}catch(err){preview=before;throw err;}
       }
-      resetComposer();filter='All';$('#search').value='';updateFilters();await load();$('#feed').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});notify(live?(wasEditing?'Milestone updated.':'Your milestone is now public.'):'Preview saved in this browser only.');
+      resetComposer();filter='All';$('#search').value='';updateFilters();await load();$('#feed').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});notify(live?(wasEditing?'Changes saved for publication review.':'Milestone saved privately for publication review.'):'Preview saved in this browser only.');
     }catch(err){notify('Could not save milestone: '+err.message);}finally{$('#publish').disabled=false;}
   };
   async function showProfile(id,fallback={}){
@@ -299,6 +301,7 @@
     db=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
     const result=await db.auth.getSession();
     if(result.error){notify('The sign-in link could not be used. Please request a new link.');user=null;}else user=result.data.session?.user||null;
+    try{const destination=localStorage.getItem('fd-service-return');if(user&&destination&&/^(brief|requests|review|index|about|privacy)\.html(?:\?[^#]*)?$/.test(destination)){localStorage.removeItem('fd-service-return');location.replace(new URL(destination,location.href).href);return;}}catch{}
     db.auth.onAuthStateChange((_event,session)=>{
       const next=session?.user||null;if(next?.id===user?.id)return;
       user=next;updateAccount();if(user&&$('#auth').open)$('#auth').close();
@@ -306,7 +309,7 @@
     });
     if(location.hash.includes('access_token')||location.hash.includes('error_description'))history.replaceState(null,'',location.pathname+location.search);
     restoreDraft();await identity();
-    $('#connection').textContent='PUBLIC COMMUNITY / Your name, business, milestones, and replies are visible to everyone. Email addresses stay private.';$('#connection').classList.add('live');updateAccount();updateComposer();await load();
+    $('#connection').textContent='REVIEWED MILESTONES / Only approved milestones are public. Your own pending submissions are visible to you and reviewers. Contact emails stay private.';$('#connection').classList.add('live');updateAccount();updateComposer();await load();
     setInterval(()=>{if(!document.hidden&&user)refreshInbox();},60000);
   }catch(err){$('#connection').textContent='The community is temporarily unavailable. Please refresh to try again.';$('#publish').disabled=true;$('#account').disabled=true;$('#refresh').disabled=true;$('#posts').replaceChildren(el('div','empty','The public community could not load.'));notify(err.message);}
 })();
