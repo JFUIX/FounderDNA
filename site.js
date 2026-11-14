@@ -1,54 +1,46 @@
 'use strict';
 (()=>{
  const $=s=>document.querySelector(s);
- // A quiet, page-wide matrix of points. Cursor proximity pulls points into a connected network.
+ // Pixel field: square fragments respond in staggered rectangular patches, never a circular halo.
  const startNetworkCursor=()=>{
   if(!matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)').matches)return;
   const canvas=document.createElement('canvas');canvas.className='fd-network-cursor fd-dot-matrix';
   canvas.setAttribute('aria-hidden','true');document.body.append(canvas);
   const ctx=canvas.getContext('2d');if(!ctx)return;
-  let points=[],cols=0,rows=0,mx=-1000,my=-1000,active=false,raf=0,last=0;
-  const gap=52,radius=185;
-  const resize=()=>{
-   const w=innerWidth,h=innerHeight,d=Math.min(devicePixelRatio||1,2);
-   canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);
-   ctx.setTransform(d,0,0,d,0,0);
-   cols=Math.ceil(w/gap)+1;rows=Math.ceil(h/gap)+1;points=[];
-   const x0=(w-(cols-1)*gap)/2,y0=(h-(rows-1)*gap)/2;
-   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++)
-    points.push({ox:x0+col*gap,oy:y0+row*gap,x:x0+col*gap,y:y0+row*gap});
-  };
+  const cell=17,life=540;let mx=-1000,my=-1000,active=false,last=0;
+  const fragments=new Map();
+  const hash=(x,y)=>{let n=Math.imul(x,374761393)+Math.imul(y,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
+  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)};
   resize();addEventListener('resize',resize,{passive:true});
-  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;active=true},{passive:true});
+  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;active=true;
+   const cx=Math.floor(mx/cell),cy=Math.floor(my/cell),now=performance.now();
+   // Pixelated, asymmetric rectangular scatter with hard edges and occasional gaps.
+   for(let iy=-3;iy<=3;iy++)for(let ix=-5;ix<=5;ix++){
+    const gx=cx+ix,gy=cy+iy,noise=hash(gx,gy);
+    if(noise<.52||Math.abs(ix)+Math.abs(iy)>7+noise*2)continue;
+    const key=gx+','+gy;
+    fragments.set(key,{gx,gy,born:now,seed:noise});
+   }
+   if(fragments.size>180){for(const key of fragments.keys()){fragments.delete(key);if(fragments.size<=140)break}}
+  },{passive:true});
   document.addEventListener('pointerleave',()=>{active=false});
   addEventListener('blur',()=>{active=false});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)last=0});
-  const render=t=>{
-   raf=requestAnimationFrame(render);
-   if(document.hidden||t-last<28)return;last=t;
+  const draw=t=>{
+   requestAnimationFrame(draw);
+   if(document.hidden||t-last<30)return;last=t;
    ctx.clearRect(0,0,innerWidth,innerHeight);
-   if(!active)return;
-   // Only the four nearest matrix points are visible and interactive at once.
-   const near=points.map(p=>({p,dist:Math.hypot(mx-p.ox,my-p.oy)}))
-    .sort((a,b)=>a.dist-b.dist).slice(0,4);
-   for(const item of near){
-    const p=item.p,dx=mx-p.ox,dy=my-p.oy,dist=item.dist;
-    const influence=Math.max(0,1-dist/110);
-    const pull=influence*influence*15;
-    const tx=p.ox+(dist?dx/dist*pull:0),ty=p.oy+(dist?dy/dist*pull:0);
-    p.x+=(tx-p.x)*.24;p.y+=(ty-p.y)*.24;
-   }
-   for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++){
-    const a=near[i].p,b=near[j].p;
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-    ctx.lineWidth=.7;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.stroke();
-   }
-   for(const {p} of near){
-    ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();
+   for(const [key,p] of fragments){
+    const age=t-p.born;if(age>life){fragments.delete(key);continue}
+    const fade=Math.min(1,(life-age)/190),jitter=p.seed>.86?2:0;
+    const size=p.seed>.87?7:p.seed>.67?4:2.5;
+    const x=p.gx*cell+cell/2-size/2+(p.seed-.5)*jitter;
+    const y=p.gy*cell+cell/2-size/2;
+    const red=p.seed>.91;
+    ctx.fillStyle=red?'rgba(200,0,0,'+(.55*fade)+')':'rgba(255,255,255,'+(.52*fade)+')';
+    ctx.fillRect(Math.round(x),Math.round(y),size,size);
    }
   };
-  raf=requestAnimationFrame(render);
+  requestAnimationFrame(draw);
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startNetworkCursor,{once:true});else startNetworkCursor();
 
