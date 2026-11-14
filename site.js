@@ -1,46 +1,51 @@
 'use strict';
 (()=>{
  const $=s=>document.querySelector(s);
- // Pixel field: square fragments respond in staggered rectangular patches, never a circular halo.
+ // Interactive Pixel Tiles: a faint fixed square grid, with tiles lighting up near the pointer.
  const startNetworkCursor=()=>{
   if(!matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)').matches)return;
   const canvas=document.createElement('canvas');canvas.className='fd-network-cursor fd-dot-matrix';
   canvas.setAttribute('aria-hidden','true');document.body.append(canvas);
   const ctx=canvas.getContext('2d');if(!ctx)return;
-  const cell=32,life=650;let mx=-1000,my=-1000,active=false,last=0;
-  const fragments=new Map();
+  const cell=36,tile=27,fadeMs=380;
+  let mx=-1000,my=-1000,active=false,last=0,cols=0,rows=0;
+  const lit=new Map();
   const hash=(x,y)=>{let n=Math.imul(x,374761393)+Math.imul(y,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
-  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)};
+  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0);cols=Math.ceil(innerWidth/cell);rows=Math.ceil(innerHeight/cell)};
   resize();addEventListener('resize',resize,{passive:true});
-  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;active=true;
+  addEventListener('pointermove',e=>{
+   if(e.pointerType==='touch')return;
+   mx=e.clientX;my=e.clientY;active=true;
    const cx=Math.floor(mx/cell),cy=Math.floor(my/cell),now=performance.now();
-   // Pixelated, asymmetric rectangular scatter with hard edges and occasional gaps.
-   for(let iy=-2;iy<=2;iy++)for(let ix=-3;ix<=3;ix++){
-    const gx=cx+ix,gy=cy+iy,noise=hash(gx,gy);
-    if(noise<.38||Math.abs(ix)+Math.abs(iy)>4+noise*2)continue;
-    const key=gx+','+gy;
-    fragments.set(key,{gx,gy,born:now,seed:noise});
+   // A block-shaped activation zone, not a radial/circular glow.
+   for(let y=-2;y<=2;y++)for(let x=-3;x<=3;x++){
+    const gx=cx+x,gy=cy+y;
+    if(gx<0||gy<0||gx>=cols||gy>=rows)continue;
+    const noise=hash(gx,gy);
+    if(noise<.22)continue;
+    lit.set(gx+','+gy,{gx,gy,at:now,strength:(1-Math.max(Math.abs(x)/4,Math.abs(y)/3))*(.7+.3*noise),red:noise>.94});
    }
-   if(fragments.size>180){for(const key of fragments.keys()){fragments.delete(key);if(fragments.size<=140)break}}
   },{passive:true});
   document.addEventListener('pointerleave',()=>{active=false});
   addEventListener('blur',()=>{active=false});
   const draw=t=>{
    requestAnimationFrame(draw);
-   if(document.hidden||t-last<30)return;last=t;
+   if(document.hidden||t-last<33)return;last=t;
    ctx.clearRect(0,0,innerWidth,innerHeight);
-   for(const [key,p] of fragments){
-    const age=t-p.born;if(age>life){fragments.delete(key);continue}
-    const fade=Math.min(1,(life-age)/230);
-    const size=p.seed>.83?30:p.seed>.6?26:22;
-    const x=p.gx*cell+(cell-size)/2;
-    const y=p.gy*cell+(cell-size)/2;
-    const red=p.seed>.89;
-    ctx.lineWidth=red?1.5:1.15;
-    ctx.strokeStyle=red?'rgba(200,0,0,'+(.78*fade)+')':'rgba(255,255,255,'+(.68*fade)+')';
-    ctx.strokeRect(Math.round(x)+.5,Math.round(y)+.5,size,size);
-    ctx.fillStyle=red?'rgba(200,0,0,'+(.10*fade)+')':'rgba(255,255,255,'+(.065*fade)+')';
-    ctx.fillRect(Math.round(x)+1,Math.round(y)+1,size-1,size-1);
+   // Stationary, barely visible tiles across the viewport.
+   ctx.lineWidth=.6;ctx.strokeStyle='rgba(255,255,255,.075)';
+   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const px=x*cell+(cell-tile)/2+.5,py=y*cell+(cell-tile)/2+.5;
+    ctx.strokeRect(px,py,tile,tile);
+   }
+   for(const [key,p] of lit){
+    const elapsed=t-p.at;if(elapsed>fadeMs){lit.delete(key);continue}
+    const alpha=(1-elapsed/fadeMs)*p.strength;
+    const px=p.gx*cell+(cell-tile)/2+.5,py=p.gy*cell+(cell-tile)/2+.5;
+    ctx.lineWidth=1.25;
+    ctx.strokeStyle=p.red?'rgba(200,0,0,'+(.85*alpha)+')':'rgba(255,255,255,'+(.75*alpha)+')';
+    ctx.fillStyle=p.red?'rgba(200,0,0,'+(.18*alpha)+')':'rgba(255,255,255,'+(.11*alpha)+')';
+    ctx.fillRect(px,py,tile,tile);ctx.strokeRect(px,py,tile,tile);
    }
   };
   requestAnimationFrame(draw);
