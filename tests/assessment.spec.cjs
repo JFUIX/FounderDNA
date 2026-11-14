@@ -73,3 +73,11 @@ test('weekly check-in interface is present but hidden before sign-in',async({pag
  await expect(page.locator('#checkin-focus')).toHaveAttribute('maxlength','500');
  await expect(page.locator('#dashboard-content')).toBeHidden();
 });
+
+test('private progress report controls are present and hidden before sign-in',async({page})=>{
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.locator('#progress-report')).toHaveCount(1);
+ await expect(page.locator('#report-download')).toBeDisabled();
+ await expect(page.locator('#report-print')).toBeDisabled();
+ await expect(page.locator('#dashboard-content')).toBeHidden();
+});
