@@ -90,7 +90,7 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 
 /* FounderDNA cinematic hero. Upload the approved artwork to assets/founderdna-hero.png. */
 .founder-hero{position:relative;isolation:isolate;overflow:hidden;min-height:clamp(660px,58vw,880px);display:flex;align-items:center;padding:110px 0 100px;background:#090000}
-.founder-hero-scene{position:absolute;inset:0;z-index:-1;overflow:hidden;background-image:linear-gradient(90deg,#080000 0%,#080000ed 23%,#080000a6 46%,#08000018 78%),url('assets/founderdna-hero.png'),radial-gradient(ellipse at 77% 52%,#7a0808 0%,#1d0101 45%,#090000 83%);background-size:cover,cover,cover;background-position:center,center,right center;background-repeat:no-repeat}
+.founder-hero-scene{position:absolute;inset:0;z-index:0;overflow:hidden;background-image:linear-gradient(90deg,#080000 0%,#080000ed 23%,#080000a6 46%,#08000018 78%),url('assets/founderdna-hero.png'),radial-gradient(ellipse at 77% 52%,#7a0808 0%,#1d0101 45%,#090000 83%);background-size:cover,cover,cover;background-position:center,center,right center;background-repeat:no-repeat}
 .founder-hero-scene:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#090000a8 0%,transparent 28%,transparent 75%,#09000080 100%);pointer-events:none}
 .founder-hero-inner{width:100%;position:relative;z-index:2}
 .founder-hero-copy{max-width:760px}
@@ -111,3 +111,8 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 @media(max-width:850px){.founder-hero{min-height:740px;padding:90px 0 65px;align-items:flex-start}.founder-hero-scene{background-image:linear-gradient(180deg,#080000d9 0%,#080000ba 38%,#08000035 65%,#08000080 100%),url('assets/founderdna-hero.png'),radial-gradient(ellipse at 70% 65%,#7a0808,#090000 75%);background-position:center,62% center,center}.founder-hero-copy{max-width:650px}.founder-hero h1{font-size:clamp(46px,10vw,78px)}.founder-hero .hero-actions{margin-bottom:32px}.founder-hero-smoke{width:100vw;height:60vw;left:10%}}
 @media(max-width:520px){.founder-hero{min-height:720px;padding:65px 0 45px}.founder-hero-scene{background-position:center,65% bottom,center;background-size:cover,auto 75%,cover}.founder-hero h1{font-size:clamp(43px,11vw,60px)}.founder-hero-kicker{letter-spacing:.19em}.founder-hero .lead{font-size:16px}.founder-hero .hero-actions{gap:12px;margin:25px 0 32px}.founder-hero .hero-actions .btn{width:100%}.founder-hero .trust-row{gap:12px 20px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.founder-hero-smoke{animation:none!important}}
+
+/* Ensure the hero artwork renders above the hero's opaque background and behind its copy. */
+.founder-hero{isolation:isolate}
+.founder-hero-scene{z-index:0}
+.founder-hero-inner{z-index:2}
