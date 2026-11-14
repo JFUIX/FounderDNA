@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Founder Assessment | FounderDNA</title><meta name="description" content="Explore your founder readiness across clarity, validation, execution and resilience. Get practical next steps.">
-<meta name="theme-color" content="#050505"><link rel="stylesheet" href="platform.css?v=5">
+<meta name="theme-color" content="#050505"><link rel="stylesheet" href="platform.css?v=7">
 <style>
 :root{--bg:#050505;--surface:#111;--raised:#181818;--line:#393939;--ink:#fff;--muted:#c4c4c4;--accent:#C70102;--gold:#f0f0f0}
-body{background:#050505;color:#fff}.assessment-wrap{max-width:1050px;margin:auto;padding:70px 24px 110px}
+body{background:#050505;color:#fff}.assessment-wrap{max-width:1280px;margin:auto;padding:70px clamp(20px,4vw,64px) 110px}
 .assessment-top{display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap}
 .assessment-eyebrow{color:#f17777;letter-spacing:.2em;font-size:12px;font-weight:700}
 .assessment-wrap h1{font-size:clamp(44px,7vw,90px);line-height:1.03;margin:25px 0}
-.assessment-wrap h1 span{color:#e02b2b}.assessment-wrap p{max-width:690px}
-.assessment-panel{background:#121212;border:1px solid #383838;border-radius:18px;padding:clamp(22px,4vw,48px);margin-top:35px}
+.assessment-wrap h1 span{color:#ef3535}.assessment-wrap p{max-width:800px}
+.assessment-panel{background:#121212;border:1px solid #383838;border-radius:20px;padding:clamp(22px,4vw,56px);margin-top:35px}
 .assessment-panel h2{font-size:clamp(25px,3.5vw,42px)}
 .progress-track{height:5px;background:#333;border-radius:10px;overflow:hidden;margin:20px 0 36px}
 .progress-fill{height:100%;background:#C70102;width:0;transition:width .25s}
@@ -36,7 +36,7 @@ body{background:#050505;color:#fff}.assessment-wrap{max-width:1050px;margin:auto
 .results-hero{display:grid;grid-template-columns:1fr 1fr;gap:35px;align-items:center;margin:25px 0 50px}
 .results-kicker{font-size:13px;color:#ddd}.results-summary{border-left:2px solid #C70102;padding-left:28px}
 .results-summary h2{margin:14px 0}.score-large{line-height:1.2}
-.result-card{padding:25px}.metric-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.metric-head strong{font-size:25px}.metric-track{height:8px;background:#363636;border-radius:20px;margin:18px 0;overflow:hidden}.metric-fill{height:100%;background:linear-gradient(90deg,#8e0505,#f13232);border-radius:20px}
+.result-card{padding:28px;min-height:180px}.metric-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.metric-head strong{font-size:25px}.metric-track{height:8px;background:#363636;border-radius:20px;margin:18px 0;overflow:hidden}.metric-fill{height:100%;background:linear-gradient(90deg,#8e0505,#f13232);border-radius:20px}
 .action-plan{margin-top:45px;padding:32px;border:1px solid #563030;background:linear-gradient(135deg,#230909,#101010);border-radius:14px}.action-plan h2{margin-top:15px}.action-plan ol{padding-left:23px;line-height:1.8;color:#ddd}.action-plan li{padding:7px 0}
 .assessment-controls{align-items:center}.assessment-controls .secondary-action{min-height:45px;border-radius:8px;padding:10px 20px}
 @media(max-width:650px){.results-hero{grid-template-columns:1fr;gap:10px}.results-summary{border-left:0;border-top:2px solid #C70102;padding:20px 0 0}.action-plan{padding:22px}.assessment-controls>*{flex:1 1 100%;justify-content:center}}
@@ -44,7 +44,7 @@ body{background:#050505;color:#fff}.assessment-wrap{max-width:1050px;margin:auto
 </style></head><body>
 <main class="assessment-wrap"><div class="assessment-top"><a class="wordmark" href="./index.html">Founder<span>DNA</span></a><a href="./index.html" class="secondary-action" style="padding:10px 14px;border-radius:8px">Back to website</a></div>
 <div class="assessment-eyebrow" style="margin-top:55px">THE FOUNDERDNA ASSESSMENT</div>
-<h1>Know where you stand.<br><span>Know what to do next.</span></h1>
+<h1>Understand your strengths.<br><span>Make your next move count.</span></h1>
 <p>Explore your current approach to building a business. Twelve focused questions reveal strengths, gaps, and practical priorities. This is a reflection tool, not a prediction of business success.</p>
 <section class="assessment-panel" id="assessment" aria-live="off"><div id="assessment-content"></div></section>
 <p class="muted-note">Your answers stay in this browser during the assessment. No account, automatic upload, or server-side storage. Results are indicative, not a validated psychological or financial assessment.</p>
