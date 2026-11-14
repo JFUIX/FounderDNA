@@ -73,3 +73,7 @@ The signed-in founder dashboard includes a private task list with task title, op
 The private dashboard now includes a consolidated report of recent assessment results, completed action tasks, and weekly reflections. It shows the latest score, oldest-to-newest comparison, completed-task count, latest reflection highlights, and up to five pending tasks. The report can be downloaded as Markdown (`.md`) or printed from the browser. It uses existing owner-scoped Supabase tables and does not create a separate report record or send data to an export service. Queries are bounded to 100 assessments, 100 tasks, and 52 weekly check-ins; the report discloses when a query reaches its limit.
 
 **Verification:** JavaScript syntax and repository structure checked. Browser QA and live authenticated export remain to be verified.
+
+## Production readiness QA expansion
+
+The Playwright workflow now runs on changes to `progress-report.js`, `site.js`, and `community-config.js`, not only assessment and dashboard HTML/JS. Added an authenticated dashboard integration smoke test using an in-browser mocked Supabase client to cover task creation/completion, weekly check-in saving, and Markdown report export. **Mocked tests do not verify real Supabase authentication, email delivery, or RLS isolation.** The three private tables' owner-only SELECT/INSERT/UPDATE/DELETE policies were inspected in the live database. The real two-account isolation and magic-link flows remain pending manual verification.
