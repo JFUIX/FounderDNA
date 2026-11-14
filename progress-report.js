@@ -26,7 +26,7 @@
   const change=assessments.length>1?latest.overall_score-oldest.overall_score:null;
   const label=(value,title)=>{const el=make('div','','report-stat');el.append(make('strong',value),make('span',title));stats.append(el);};
   stats.replaceChildren();
-  label(latest?latest.overall_score+'%':'—','Latest assessment');
+  label(latest?latest.overall_score+'%':'Not available','Latest assessment');
   label(tasks.length?done+' / '+tasks.length:'0','Completed / recent tasks');
   label(String(checkins.length),'Recent weekly check-ins');
   const lines=[
@@ -46,9 +46,9 @@
    add('Next focus',recent.next_focus);
   }
   const pending=tasks.filter(x=>!x.completed).slice(0,5);
-  if(pending.length)add('Next actions',pending.map(x=>'• '+x.title+(x.goal?' — '+x.goal:'')).join('\n'));
+  if(pending.length)add('Next actions',pending.map(x=>'• '+x.title+(x.goal?': '+x.goal:'')).join('\n'));
   const exportText=()=>[
-   '# FounderDNA — Founder Progress Report',
+   '# FounderDNA | Founder Progress Report',
    'Generated: '+new Date().toLocaleString(),
    '',
    '## Snapshot',...lines,'',
