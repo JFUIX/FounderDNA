@@ -1,6 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const path = require('node:path');
-const url = 'file://' + path.resolve(__dirname, '..', 'assessment.html');
+const url = 'http://127.0.0.1:8765/assessment.html';
 test('all-zero answers produce 0%, including valid zero responses', async ({page}) => {
  await page.goto(url);
  for(let i=0;i<12;i++){
