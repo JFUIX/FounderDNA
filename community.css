@@ -14,3 +14,8 @@ body{background:var(--bg);color:var(--ink)}
 .top{background:#050505}.brand{font-family:'FounderGothamBlack',Inter,Arial,sans-serif;font-weight:900;letter-spacing:-.045em;display:inline-block;transform:scaleX(1.065);transform-origin:left center;white-space:nowrap}.brand span{color:inherit}.brand small{font-family:Inter,Arial,sans-serif;font-weight:600;letter-spacing:1.5px;color:#aaa;transform:scaleX(.94);transform-origin:left center}
 .primary{background:#C80000;border-color:#C80000;color:#fff}.primary:hover{background:#e11818}.intro em,.red,.community-note .eyebrow,.top #unread-count{color:#C80000}.left>a.side-active{background:#1c1011;border-left-color:#C80000}.avatar{background:#2c1718;border-color:#4c2325;color:#ff777a}.badge{background:#221416;border-color:#473032;color:#f3a2a5}.check{display:flex;align-items:flex-start;line-height:1.7;font-size:11px;font-weight:400;color:#aaa}.check input{width:18px;height:18px;flex-shrink:0;margin:2px 10px 0 0;accent-color:#C80000}.notice.live{background:#0e1b13;border-color:#23472e;color:#a9cfb1}
 .community-footer>a:first-child{color:#fff}
+
+/* Align the footer logo and navigation on the same visual baseline. */
+.community-footer{align-items:center}
+.community-footer>a:first-child{transform:none;display:inline-flex;align-items:center;line-height:1.15;margin:0;vertical-align:middle}
+.community-footer>a:not(:first-child){display:inline-flex;align-items:center;line-height:1.15;vertical-align:middle}
