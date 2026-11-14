@@ -67,3 +67,9 @@ The optional **Save to my account** action uses Supabase email-link authenticati
 The signed-in founder dashboard includes a private task list with task title, optional goal, completion toggle, and deletion. Tasks are stored in `public.founder_action_tasks` with RLS ownership policies for SELECT/INSERT/UPDATE/DELETE and no anonymous table access. Dashboard lists are limited to 100 recent tasks. Task text is rendered via `textContent` to avoid injecting user-entered HTML.
 
 **Pending production verification:** authenticated create/complete/delete flow, two-account access isolation, and newest GitHub Actions run.
+
+## Founder Progress Report
+
+The private dashboard now includes a consolidated report of recent assessment results, completed action tasks, and weekly reflections. It shows the latest score, oldest-to-newest comparison, completed-task count, latest reflection highlights, and up to five pending tasks. The report can be downloaded as Markdown (`.md`) or printed from the browser. It uses existing owner-scoped Supabase tables and does not create a separate report record or send data to an export service. Queries are bounded to 100 assessments, 100 tasks, and 52 weekly check-ins; the report discloses when a query reaches its limit.
+
+**Verification:** JavaScript syntax and repository structure checked. Browser QA and live authenticated export remain to be verified.
