@@ -70,3 +70,8 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 @media(max-width:760px){.site-head{position:relative}.head-inner{flex-wrap:wrap;align-items:center;padding:17px 5%}.main-nav{width:100%;justify-content:flex-start;gap:13px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:5px;scrollbar-width:thin}.main-nav>a,.main-nav button{white-space:nowrap;flex-shrink:0}.main-nav .optional{display:none}.hero{min-height:0;padding:80px 0}.hero h1{font-size:clamp(42px,10vw,68px);letter-spacing:-.06em}.hero-actions .btn{width:100%}.section{padding:60px 0}.grid3,.grid2,.split-section{grid-template-columns:1fr}.support-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-steps{position:static}.review-layout{grid-template-columns:1fr}.footer .wrap{align-items:flex-start;flex-direction:column}}
 @media(max-width:420px){.wrap{padding:0 20px}.support-grid{grid-template-columns:1fr}.action-card:last-child{grid-column:auto}.hero h1{font-size:clamp(38px,10vw,48px)}.panel,.request-card{padding:20px}.form-steps ol{display:block}.main-nav{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Unified text-only FounderDNA wordmark: equal type size, no icon or word gap */
+.wordmark{gap:0;letter-spacing:-.045em}
+.wordmark span{font:inherit;letter-spacing:inherit;color:inherit}
+.wordmark svg{display:none!important}
