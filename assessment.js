@@ -14,7 +14,7 @@ const questions=[
 ];
 const options=['Not yet','Just starting','Somewhat','Mostly','Consistently'];
 const answers=Array(questions.length).fill(null);let step=0;
-const root=document.getElementById('assessment-content');
+const root=document.getElementById('assessment-content');root.tabIndex=-1;
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const button=(label,cls,fn)=>{const b=make('button',label,cls);b.type='button';b.onclick=fn;return b;};
 const score=(indices)=>Math.round(indices.reduce((sum,i)=>sum+answers[i],0)/(indices.length*4)*100);
