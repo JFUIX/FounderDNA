@@ -58,3 +58,10 @@ test('dashboard keeps private content hidden before authentication',async({page}
  await expect(page.locator('#dashboard-content')).toBeHidden();
  await expect(page.locator('#dashboard-history')).toBeHidden();
 });
+
+test('action plan form exists and stays private while signed out',async({page})=>{
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.locator('#task-form')).toHaveCount(1);
+ await expect(page.locator('#task-title')).toHaveAttribute('maxlength','180');
+ await expect(page.locator('#dashboard-content')).toBeHidden();
+});
