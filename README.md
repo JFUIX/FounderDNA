@@ -11,7 +11,9 @@ FounderDNA is a founder self-assessment and practical business-support platform.
 - Category scores and an overall percentage with actionable recommendations
 - Valid zero-valued responses are handled correctly (unanswered is represented by `null`)
 - No account required; responses are held in page memory, not submitted to a server
-- Print/save results using the browser
+- Premium results dashboard with category meters, strengths and growth priorities, and a seven-day action plan
+- Download a plain-text results report, or print/save a PDF through the browser
+- Keyboard-accessible question controls and progress indicators
 
 Scores are self-reported reflections, **not** validated psychometrics or predictions of business success.
 
