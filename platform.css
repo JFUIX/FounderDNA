@@ -118,3 +118,7 @@ body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relativ
 
 /* Keep the banner above the page background, but below every hero content element. */
 .hero.founder-texture-hero>*{position:relative;z-index:1}
+
+/* Decorative cursor network: never blocks links or controls. */
+.fd-network-cursor{position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;pointer-events:none;opacity:0;transition:opacity .22s ease}
+@media(hover:none),(pointer:coarse),(prefers-reduced-motion:reduce){.fd-network-cursor{display:none}}
