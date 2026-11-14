@@ -19,7 +19,7 @@
   const {data,error}=await db.from('assessment_results').select('id,overall_score,dimension_scores,created_at').order('created_at',{ascending:false}).limit(100);
   if(error)throw error;
   const records=data||[];
-  $('#assessment-count').textContent=records.length===100?'100+':String(records.length);
+  $('#assessment-count').textContent=String(records.length);
   if(records.length){
    const latest=records[0];
    $('#latest-score').textContent=latest.overall_score+'%';
