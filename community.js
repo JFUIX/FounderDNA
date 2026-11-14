@@ -301,7 +301,7 @@
     db=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
     const result=await db.auth.getSession();
     if(result.error){notify('The sign-in link could not be used. Please request a new link.');user=null;}else user=result.data.session?.user||null;
-    try{const destination=localStorage.getItem('fd-service-return');if(user&&destination&&/^(brief|requests|review|index|about|privacy)\.html(?:\?[^#]*)?$/.test(destination)){localStorage.removeItem('fd-service-return');location.replace(new URL(destination,location.href).href);return;}}catch{}
+    try{const destination=localStorage.getItem('fd-service-return');if(user&&destination&&/^(brief|requests|review|index|about|privacy|assessment|dashboard)\.html(?:\?[^#]*)?$/.test(destination)){localStorage.removeItem('fd-service-return');location.replace(new URL(destination,location.href).href);return;}}catch{}
     db.auth.onAuthStateChange((_event,session)=>{
       const next=session?.user||null;if(next?.id===user?.id)return;
       user=next;updateAccount();if(user&&$('#auth').open)$('#auth').close();
