@@ -24,8 +24,9 @@
 .dashboard-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
 @media(max-width:860px){.dashboard-grid{grid-template-columns:1fr 1fr}.dashboard-compare{grid-template-columns:1fr}}
 @media(max-width:540px){.dashboard-grid{grid-template-columns:1fr}.dashboard-entry{flex-wrap:wrap}.dashboard-entry>*{flex:1 1 auto}}
+.dashboard-priority{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;padding:26px;background:linear-gradient(115deg,#241011,#121213 65%);border:1px solid #713032;border-radius:18px}.dashboard-priority h3{font-size:clamp(24px,3vw,36px);margin:8px 0}.dashboard-priority p{max-width:720px;margin-bottom:0}.dashboard-priority .btn{white-space:nowrap}.dashboard-trend{display:flex;gap:9px;align-items:flex-end;min-height:125px;margin:20px 0 10px;border-bottom:1px solid #414144;padding:0 2px 5px}.trend-bar{flex:1;min-width:8px;max-width:65px;border-radius:5px 5px 0 0;background:#C70102;position:relative}.trend-bar:focus-visible{outline:2px solid white;outline-offset:3px}.dashboard-note{font-size:12px;color:#bcbcbc}.dashboard-history-button{border:1px solid #555;border-radius:8px;background:transparent;color:white;padding:9px 12px}.dashboard-history-button:hover{border-color:#f77}@media(max-width:650px){.dashboard-priority{grid-template-columns:1fr}.dashboard-priority .btn{width:100%;text-align:center}}
 </style>
-<script src="community-config.js" defer></script><script src="site.js?v=4" defer></script><script src="dashboard.js?v=1" defer></script>
+<script src="community-config.js" defer></script><script src="site.js?v=4" defer></script><script src="dashboard.js?v=2" defer></script>
 </head><body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head"><div class="head-inner"><a class="wordmark" href="./index.html" aria-label="FounderDNA home">Founder<span>DNA</span></a>
@@ -41,7 +42,9 @@
 <div class="dashboard-card"><span class="eyebrow">ASSESSMENTS SAVED</span><div class="dashboard-score" id="assessment-count">0</div><p>Saved privately to your account.</p></div>
 <div class="dashboard-card"><span class="eyebrow">PROGRESS SINCE FIRST RESULT</span><div class="dashboard-score" id="score-change">—</div><p id="comparison-note">Complete at least two assessments to compare your progress.</p></div>
 </section>
+<section class="dashboard-section" id="priority-section" hidden><span class="eyebrow">YOUR NEXT BEST EXPERIMENT</span><div class="dashboard-priority"><div><h3 id="priority-title"></h3><p id="priority-description"></p></div><a class="btn" href="./brief.html?action=support">Ask for practical support</a></div></section>
 <section class="dashboard-section" id="dimensions-section" hidden><h2>Your founder dimensions</h2><div class="dashboard-compare" id="dimensions"></div></section>
+<section class="dashboard-section" id="trend-section" hidden><h2>Your reflection trend</h2><p class="dashboard-note">Each bar is one saved self-assessment, oldest to newest. Changes reflect your answers, not a measure of business success.</p><div id="dashboard-trend" class="dashboard-trend" role="img" aria-label="Saved assessment score trend"></div></section>
 <section class="dashboard-section"><h2>Recent assessments</h2><div id="dashboard-history" class="dashboard-list"></div><div class="dashboard-actions"><a class="btn" href="./assessment.html">Take an assessment</a><a class="btn secondary" href="./requests.html">Open My Progress</a></div></section>
 <section class="dashboard-section"><h2>From insight to action</h2><div class="dashboard-grid">
 <article class="dashboard-card"><span class="eyebrow">01 / UNDERSTAND</span><h2>Review your profile</h2><p>Use your four dimensions to identify the next skill or assumption to work on.</p><a class="btn secondary" href="./assessment.html">Explore assessment</a></article>
