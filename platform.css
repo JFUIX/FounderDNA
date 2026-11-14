@@ -122,3 +122,6 @@ body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relativ
 /* Decorative cursor network: never blocks links or controls. */
 .fd-network-cursor{position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;pointer-events:none;opacity:0;transition:opacity .22s ease}
 @media(hover:none),(pointer:coarse),(prefers-reduced-motion:reduce){.fd-network-cursor{display:none}}
+
+/* Ambient matrix remains visible across the viewport; links emerge near the pointer. */
+.fd-network-cursor.fd-dot-matrix{opacity:1;transition:none}
