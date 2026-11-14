@@ -27,28 +27,25 @@
    raf=requestAnimationFrame(render);
    if(document.hidden||t-last<28)return;last=t;
    ctx.clearRect(0,0,innerWidth,innerHeight);
-   const near=[];
-   for(const p of points){
-    const dx=mx-p.ox,dy=my-p.oy,dist=Math.hypot(dx,dy);
-    const influence=active?Math.max(0,1-dist/radius):0;
-    // Each nearby dot is gently attracted toward the pointer, then springs back.
-    const pull=influence*influence*23;
+   if(!active)return;
+   // Only the four nearest matrix points are visible and interactive at once.
+   const near=points.map(p=>({p,dist:Math.hypot(mx-p.ox,my-p.oy)}))
+    .sort((a,b)=>a.dist-b.dist).slice(0,4);
+   for(const item of near){
+    const p=item.p,dx=mx-p.ox,dy=my-p.oy,dist=item.dist;
+    const influence=Math.max(0,1-dist/110);
+    const pull=influence*influence*15;
     const tx=p.ox+(dist?dx/dist*pull:0),ty=p.oy+(dist?dy/dist*pull:0);
-    p.x+=(tx-p.x)*.18;p.y+=(ty-p.y)*.18;
-    const close=active&&dist<radius;
-    if(close)near.push({p,dist});
-    ctx.beginPath();ctx.arc(p.x,p.y,close?1.5+influence*1.1:1.1,0,Math.PI*2);
-    ctx.fillStyle=close?'rgba(255,255,255,'+(0.26+influence*.65)+')':'rgba(255,255,255,.16)';
-    ctx.fill();
+    p.x+=(tx-p.x)*.24;p.y+=(ty-p.y)*.24;
    }
-   // Only the area around the pointer reveals a web of relationships.
    for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++){
-    const a=near[i],b=near[j],dist=Math.hypot(a.p.x-b.p.x,a.p.y-b.p.y);
-    if(dist>83)continue;
-    const strength=(1-a.dist/radius)*(1-b.dist/radius);
-    if(strength<.015)continue;
-    ctx.beginPath();ctx.moveTo(a.p.x,a.p.y);ctx.lineTo(b.p.x,b.p.y);
-    ctx.lineWidth=.8;ctx.strokeStyle='rgba(255,255,255,'+Math.min(.58,strength*.72)+')';ctx.stroke();
+    const a=near[i].p,b=near[j].p;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+    ctx.lineWidth=.7;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.stroke();
+   }
+   for(const {p} of near){
+    ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();
    }
   };
   raf=requestAnimationFrame(render);
