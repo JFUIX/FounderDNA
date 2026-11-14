@@ -1,52 +1,28 @@
 'use strict';
 (()=>{
  const $=s=>document.querySelector(s);
- // Interactive Pixel Tiles: a faint fixed square grid, with tiles lighting up near the pointer.
+ // One pixel tile beneath the cursor; no surrounding grid or trailing boxes.
  const startNetworkCursor=()=>{
   if(!matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)').matches)return;
   const canvas=document.createElement('canvas');canvas.className='fd-network-cursor fd-dot-matrix';
   canvas.setAttribute('aria-hidden','true');document.body.append(canvas);
   const ctx=canvas.getContext('2d');if(!ctx)return;
-  const cell=36,tile=27,fadeMs=380;
-  let mx=-1000,my=-1000,active=false,last=0,cols=0,rows=0;
-  const lit=new Map();
-  const hash=(x,y)=>{let n=Math.imul(x,374761393)+Math.imul(y,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
-  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0);cols=Math.ceil(innerWidth/cell);rows=Math.ceil(innerHeight/cell)};
+  const size=32;let mx=0,my=0,active=false,last=0;
+  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)};
   resize();addEventListener('resize',resize,{passive:true});
-  addEventListener('pointermove',e=>{
-   if(e.pointerType==='touch')return;
-   mx=e.clientX;my=e.clientY;active=true;
-   const cx=Math.floor(mx/cell),cy=Math.floor(my/cell),now=performance.now();
-   // A block-shaped activation zone, not a radial/circular glow.
-   for(let y=-2;y<=2;y++)for(let x=-3;x<=3;x++){
-    const gx=cx+x,gy=cy+y;
-    if(gx<0||gy<0||gx>=cols||gy>=rows)continue;
-    const noise=hash(gx,gy);
-    if(noise<.22)continue;
-    lit.set(gx+','+gy,{gx,gy,at:now,strength:(1-Math.max(Math.abs(x)/4,Math.abs(y)/3))*(.7+.3*noise),red:noise>.94});
-   }
-  },{passive:true});
+  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;active=true},{passive:true});
   document.addEventListener('pointerleave',()=>{active=false});
   addEventListener('blur',()=>{active=false});
   const draw=t=>{
    requestAnimationFrame(draw);
-   if(document.hidden||t-last<33)return;last=t;
+   if(document.hidden||t-last<16)return;last=t;
    ctx.clearRect(0,0,innerWidth,innerHeight);
-   // Stationary, barely visible tiles across the viewport.
-   ctx.lineWidth=.6;ctx.strokeStyle='rgba(255,255,255,.075)';
-   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
-    const px=x*cell+(cell-tile)/2+.5,py=y*cell+(cell-tile)/2+.5;
-    ctx.strokeRect(px,py,tile,tile);
-   }
-   for(const [key,p] of lit){
-    const elapsed=t-p.at;if(elapsed>fadeMs){lit.delete(key);continue}
-    const alpha=(1-elapsed/fadeMs)*p.strength;
-    const px=p.gx*cell+(cell-tile)/2+.5,py=p.gy*cell+(cell-tile)/2+.5;
-    ctx.lineWidth=1.25;
-    ctx.strokeStyle=p.red?'rgba(200,0,0,'+(.85*alpha)+')':'rgba(255,255,255,'+(.75*alpha)+')';
-    ctx.fillStyle=p.red?'rgba(200,0,0,'+(.18*alpha)+')':'rgba(255,255,255,'+(.11*alpha)+')';
-    ctx.fillRect(px,py,tile,tile);ctx.strokeRect(px,py,tile,tile);
-   }
+   if(!active)return;
+   const x=Math.round(mx-size/2)+.5,y=Math.round(my-size/2)+.5;
+   ctx.fillStyle='rgba(255,255,255,.09)';
+   ctx.fillRect(x,y,size,size);
+   ctx.lineWidth=1.4;ctx.strokeStyle='rgba(255,255,255,.85)';
+   ctx.strokeRect(x,y,size,size);
   };
   requestAnimationFrame(draw);
  };
