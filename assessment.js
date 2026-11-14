@@ -14,6 +14,9 @@ const questions=[
 ];
 const options=['Not yet','Just starting','Somewhat','Mostly','Consistently'];
 const answers=Array(questions.length).fill(null);let step=0;
+const draftKey='founderdna-assessment-pending-v1';
+try{const pending=JSON.parse(sessionStorage.getItem(draftKey)||'null');if(Array.isArray(pending)&&pending.length===12&&pending.every(v=>Number.isInteger(v)&&v>=0&&v<=4)){answers.splice(0,12,...pending);step=12;sessionStorage.removeItem(draftKey);}}catch{}
+
 const root=document.getElementById('assessment-content');root.tabIndex=-1;
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const button=(label,cls,fn)=>{const b=make('button',label,cls);b.type='button';b.onclick=fn;return b;};
@@ -63,9 +66,57 @@ const list=make('ol');[
 ].forEach(item=>list.append(make('li',item)));plan.append(list);root.append(plan);
 const controls=actionRow();
 controls.append(button('Download results','primary-action',()=>download({scores,overall,focus,strength})));
+const save=button('Save to my account','secondary-action',async()=>{
+ save.disabled=true;save.textContent='Saving…';
+ try{
+  await window.FD.ready;
+  if(!window.FD.user){
+   sessionStorage.setItem(draftKey,JSON.stringify(answers));
+   window.FD.signIn();
+   save.textContent='Sign in to save';return;
+  }
+  const userResult=await window.FD.db.auth.getUser();
+  if(userResult.error||!userResult.data.user)throw Error('Please sign in again.');
+  const payload={user_id:userResult.data.user.id,overall_score:overall,dimension_scores:Object.fromEntries(scores.map(d=>[d.id,d.score])),answers:[...answers]};
+  const response=await window.FD.db.from('assessment_results').insert(payload);
+  if(response.error)throw response.error;
+  save.textContent='Saved to your account';
+  await showHistory();
+ }catch(error){save.textContent='Save to my account';window.FD?.notify(error.message||'Could not save. Please try again.');}
+ finally{save.disabled=false;}
+});
+controls.append(save);
 controls.append(button('Print / save PDF','secondary-action',()=>window.print()));
 controls.append(button('Retake assessment','secondary-action',()=>{answers.fill(null);step=0;render();root.querySelector('h2')?.focus();}));
 const link=make('a','Request practical support →','secondary-action');link.href='./brief.html?action=support';controls.append(link);
+const history=make('section',undefined,'assessment-history');history.id='assessment-history';root.append(history);
+showHistory();
+}
+async function showHistory(){
+ const target=document.getElementById('assessment-history');if(!target||!window.FD)return;
+ try{
+  await window.FD.ready;
+  if(!window.FD.user)return;
+  const response=await window.FD.db.from('assessment_results').select('id,overall_score,dimension_scores,created_at').order('created_at',{ascending:false}).limit(10);
+  if(response.error)throw response.error;
+  target.replaceChildren(make('h2','Your saved assessments'));
+  if(!response.data.length){target.append(make('p','No saved assessments yet. Save this result to begin tracking progress.'));return;}
+  const list=make('div',undefined,'history-list');
+  response.data.forEach(item=>{
+   const row=make('div',undefined,'history-item');
+   const date=make('span',new Date(item.created_at).toLocaleDateString());
+   const total=make('strong',item.overall_score+'%');
+   const remove=button('Delete','secondary-action',async()=>{
+    if(!confirm('Delete this saved assessment? This cannot be undone.'))return;
+    remove.disabled=true;
+    const deleted=await window.FD.db.from('assessment_results').delete().eq('id',item.id);
+    if(deleted.error){window.FD.notify(deleted.error.message);remove.disabled=false;return;}
+    showHistory();
+   });
+   row.append(date,total,remove);list.append(row);
+  });
+  target.append(list);
+ }catch(error){target.replaceChildren(make('p','Saved assessment history is unavailable right now.'));}
 }
 function download({scores,overall,focus,strength}){
 const lines=['FounderDNA | Founder Reflection Profile','Date: '+new Date().toLocaleDateString(),'Overall reflection score: '+overall+'%','',...scores.flatMap(d=>[d.label+': '+d.score+'%',d.advice,'']),'Strongest reported area: '+strength.label,'First growth opportunity: '+focus.label,'','This is a self-reported reflection tool, not a validated diagnostic or prediction of business success.'];
