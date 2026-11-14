@@ -53,3 +53,11 @@ The `.github/workflows/assessment-qa.yml` workflow runs Playwright Chromium test
 The optional **Save to my account** action uses Supabase email-link authentication and inserts into `public.assessment_results`. The table has RLS ownership checks for reading, inserting, and deleting results. Anonymous visitors can take the assessment without signing in. Results are not uploaded unless the visitor explicitly selects Save to my account. Signed-in visitors can view and delete their most recent 10 saved assessments. Saved entries include answer values, dimension percentages, and the overall reflection percentage. The My Progress page links to the assessment history.
 
 **QA note:** After the initial browser-test failure notification, the suite was changed to serve the website via localhost instead of `file://` and to upload failure diagnostics. This is a corrective attempt, not evidence that the previous failure's cause has been confirmed or that a subsequent run has passed. Review GitHub Actions for the new result. Account sign-in, redirect and RLS isolation require live test accounts before production sign-off.
+
+## Phase 5: private founder dashboard (initial release)
+
+- `dashboard.html` / `dashboard.js`: signed-in founder overview showing recent assessment results, latest dimension scores, earliest-to-latest change, and links to assessment and existing business-support requests.
+- Magic-link callback routing now recognizes `assessment.html` and `dashboard.html` alongside existing routes.
+- If an assessment is completed before sign-in, its answers are temporarily held in browser local storage for up to 30 minutes to survive an email link opening in another tab. This temporary local copy is removed when the assessment is restored. Users should avoid shared devices.
+- The dashboard reads at most 100 recent assessments and shows 12 history entries; this is not an all-time analytics count.
+- **Release gate:** source syntax and route checks are not browser end-to-end tests. Confirm GitHub Actions green, test the magic-link callback in the deployed environment, and validate owner-versus-other-user access using two dedicated accounts before production certification.
