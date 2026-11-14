@@ -76,5 +76,7 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 .wordmark span{font:inherit;letter-spacing:inherit;color:inherit}
 .wordmark svg{display:none!important}
 
-/* Gotham Bold wordmark, with visually similar fallback until licensed font is hosted */
-.wordmark,.wordmark span{font-family:'Gotham','Gotham Bold',Montserrat,Arial,sans-serif;font-weight:700;font-synthesis:none}
+
+/* Porter Bold brand wordmark. Upload the licensed font at assets/fonts/Porter-Bold.ttf. */
+@font-face{font-family:'Porter';src:url('./assets/fonts/Porter-Bold.ttf') format('truetype');font-style:normal;font-weight:700;font-display:swap}
+.wordmark,.wordmark span{font-family:'Porter',Montserrat,Arial,sans-serif;font-weight:700;font-synthesis:none}
