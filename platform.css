@@ -134,3 +134,14 @@ body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relativ
 .fd-quote-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:600px){.fd-quote-pop{top:auto;bottom:12px;right:12px;width:calc(100vw - 24px);max-width:370px}.fd-quote-text{font-size:13px!important}}
 @media(prefers-reduced-motion:reduce){.fd-quote-pop{transition:none}}
+
+/* Guided founder journey, matching the established red/black visual system. */
+.fd-journey{padding-top:clamp(56px,8vw,100px);padding-bottom:clamp(56px,8vw,100px)}
+.fd-journey-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:28px}
+.fd-journey-grid article{min-width:0;padding:clamp(22px,3vw,36px);border:1px solid #ffffff2b;background:#101010;border-radius:14px;display:flex;flex-direction:column;align-items:flex-start}
+.fd-journey-grid article>span{font-size:11px;font-weight:800;letter-spacing:.14em;color:#f26a6a}
+.fd-journey-grid h3{margin:25px 0 14px;font-size:clamp(21px,2.2vw,29px);color:#fff}
+.fd-journey-grid p{font-size:14px;line-height:1.65;flex:1}
+.fd-journey-grid a{font-size:13px;font-weight:750;color:#ff6868;border-bottom:1px solid #ff6868;padding-bottom:5px}
+.fd-journey-grid a:hover{color:#fff;border-color:#fff}
+@media(max-width:800px){.fd-journey-grid{grid-template-columns:1fr}.fd-journey-grid article{padding:25px}.fd-journey-grid h3{margin-top:14px}}
