@@ -61,3 +61,9 @@ The optional **Save to my account** action uses Supabase email-link authenticati
 - If an assessment is completed before sign-in, its answers are temporarily held in browser local storage for up to 30 minutes to survive an email link opening in another tab. This temporary local copy is removed when the assessment is restored. Users should avoid shared devices.
 - The dashboard reads at most 100 recent assessments and shows 12 history entries; this is not an all-time analytics count.
 - **Release gate:** source syntax and route checks are not browser end-to-end tests. Confirm GitHub Actions green, test the magic-link callback in the deployed environment, and validate owner-versus-other-user access using two dedicated accounts before production certification.
+
+## Founder Action Plan
+
+The signed-in founder dashboard includes a private task list with task title, optional goal, completion toggle, and deletion. Tasks are stored in `public.founder_action_tasks` with RLS ownership policies for SELECT/INSERT/UPDATE/DELETE and no anonymous table access. Dashboard lists are limited to 100 recent tasks. Task text is rendered via `textContent` to avoid injecting user-entered HTML.
+
+**Pending production verification:** authenticated create/complete/delete flow, two-account access isolation, and newest GitHub Actions run.
