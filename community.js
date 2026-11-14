@@ -309,7 +309,7 @@
     });
     if(location.hash.includes('access_token')||location.hash.includes('error_description'))history.replaceState(null,'',location.pathname+location.search);
     restoreDraft();await identity();
-    $('#connection').textContent='REVIEWED MILESTONES / Only approved milestones are public. Your own pending submissions are visible to you and reviewers. Contact emails stay private.';$('#connection').classList.add('live');updateAccount();updateComposer();await load();
+    $('#connection').hidden=true;updateAccount();updateComposer();await load();
     setInterval(()=>{if(!document.hidden&&user)refreshInbox();},60000);
   }catch(err){$('#connection').textContent='The community is temporarily unavailable. Please refresh to try again.';$('#publish').disabled=true;$('#account').disabled=true;$('#refresh').disabled=true;$('#posts').replaceChildren(el('div','empty','The public community could not load.'));notify(err.message);}
 })();
