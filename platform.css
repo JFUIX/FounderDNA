@@ -105,3 +105,13 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 @media(min-width:900px) and (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){.founder-reminder .reminder-content{animation:founderNoteReveal linear both;animation-timeline:view();animation-range:entry 5% cover 40%}@keyframes founderNoteReveal{from{opacity:.3;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}}}
 @media(max-width:760px){.founder-reminder{min-height:470px;margin:40px 0;padding:24px}.founder-reminder h2{font-size:clamp(43px,10vw,76px)}.reminder-content{padding:45px 0}.reminder-bottom strong{font-size:clamp(22px,5vw,38px)}}
 @media(max-width:420px){.founder-reminder{min-height:430px;padding:19px}.founder-reminder h2{font-size:clamp(35px,10.3vw,49px)}.reminder-top,.reminder-bottom{letter-spacing:.025em}.reminder-bottom{gap:8px}.reminder-bottom strong{font-size:23px}}
+
+
+/* Homepage hero artwork only: preserve the original grid, spacing and all following sections. */
+body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relative;isolation:isolate;color:#fff}
+.hero.founder-texture-hero:before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);background:linear-gradient(90deg,rgba(5,5,5,.85) 0%,rgba(5,5,5,.7) 45%,rgba(5,5,5,.46) 100%),url('assets/founderdna-red-texture.png') center center/cover no-repeat,#a50909;pointer-events:none}
+.hero.founder-texture-hero .lead,.hero.founder-texture-hero .trust-row{color:#f1e5e5}
+.hero.founder-texture-hero .eyebrow{color:#fff}
+.hero.founder-texture-hero h1 em{color:#ff3838}
+.hero.founder-texture-hero .btn.secondary{border-color:#fff9;color:#fff;background:#05050550}
+@media(max-width:760px){.hero.founder-texture-hero:before{background-position:center,center}}
