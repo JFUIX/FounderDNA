@@ -15,7 +15,7 @@ const questions=[
 const options=['Not yet','Just starting','Somewhat','Mostly','Consistently'];
 const answers=Array(questions.length).fill(null);let step=0;
 const draftKey='founderdna-assessment-pending-v1';
-try{const pending=JSON.parse(sessionStorage.getItem(draftKey)||'null');if(Array.isArray(pending)&&pending.length===12&&pending.every(v=>Number.isInteger(v)&&v>=0&&v<=4)){answers.splice(0,12,...pending);step=12;sessionStorage.removeItem(draftKey);}}catch{}
+try{const pending=JSON.parse(localStorage.getItem(draftKey)||'null');if(pending&&Date.now()-pending.at<30*60*1000&&Array.isArray(pending.answers)&&pending.answers.length===12&&pending.answers.every(v=>Number.isInteger(v)&&v>=0&&v<=4)){answers.splice(0,12,...pending.answers);step=12;}localStorage.removeItem(draftKey);}catch{}
 
 const root=document.getElementById('assessment-content');root.tabIndex=-1;
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
@@ -71,7 +71,7 @@ const save=button('Save to my account','secondary-action',async()=>{
  try{
   await window.FD.ready;
   if(!window.FD.user){
-   sessionStorage.setItem(draftKey,JSON.stringify(answers));
+   localStorage.setItem(draftKey,JSON.stringify({answers:[...answers],at:Date.now()}));
    window.FD.signIn();
    save.textContent='Sign in to save';return;
   }
