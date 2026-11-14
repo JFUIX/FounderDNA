@@ -82,7 +82,7 @@
    row.append(remove);history.append(row);
   }
   status.hidden=true;content.hidden=false;
-  await initializeTasks(db,auth.data.user.id);
+  await Promise.all([initializeTasks(db,auth.data.user.id),initializeCheckins(db,auth.data.user.id)]);
  }catch(error){status.textContent='Your private dashboard could not load. Please refresh or try again later.';console.error('FounderDNA dashboard:',error);}
 async function initializeTasks(db,userId){
  const form=$('#task-form'),list=$('#task-list'),message=$('#task-message');
@@ -124,6 +124,50 @@ async function initializeTasks(db,userId){
   submit.disabled=false;
   if(error){report('Could not save task: '+error.message);return;}
   form.reset();await load();
+ });
+ await load();
+}
+async function initializeCheckins(db,userId){
+ const form=$('#checkin-form'),history=$('#checkin-history'),message=$('#checkin-message');
+ const fields={win:$('#checkin-win'),challenge:$('#checkin-challenge'),lesson:$('#checkin-lesson'),next_focus:$('#checkin-focus')};
+ const startOfWeek=()=>{
+  const now=new Date();const day=now.getUTCDay();now.setUTCDate(now.getUTCDate()-((day+6)%7));return now.toISOString().slice(0,10);
+ };
+ const currentWeek=startOfWeek();
+ const load=async()=>{
+  const {data,error}=await db.from('founder_weekly_checkins').select('id,week_start,win,challenge,lesson,next_focus').order('week_start',{ascending:false}).limit(12);
+  if(error){message.textContent='Weekly reflections could not load: '+error.message;return;}
+  history.replaceChildren();
+  const entries=data||[];
+  const current=entries.find(item=>item.week_start===currentWeek);
+  for(const [key,input] of Object.entries(fields))input.value=current?.[key]||'';
+  message.textContent=current?'Your current weekly reflection is saved. You can update it.':'Your reflection is private. Save your first check-in for this week.';
+  for(const item of entries){
+   const article=text('article','','checkin-entry');
+   article.append(text('h3','Week of '+item.week_start));
+   for(const [key,label] of [['win','Win'],['challenge','Challenge'],['lesson','Lesson'],['next_focus','Next focus']]){
+    if(item[key])article.append(text('p',label+': '+item[key]));
+   }
+   const remove=text('button','Delete reflection');remove.type='button';
+   remove.addEventListener('click',async()=>{
+    if(!confirm('Delete this weekly reflection?'))return;
+    remove.disabled=true;
+    const {error}=await db.from('founder_weekly_checkins').delete().eq('id',item.id);
+    if(error){message.textContent='Could not delete: '+error.message;remove.disabled=false;return;}
+    await load();
+   });
+   article.append(remove);history.append(article);
+  }
+ };
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const values=Object.fromEntries(Object.entries(fields).map(([key,input])=>[key,input.value.trim()]));
+  if(!Object.values(values).some(Boolean)){message.textContent='Write at least one reflection before saving.';return;}
+  const submit=form.querySelector('button[type="submit"]');submit.disabled=true;
+  const {error}=await db.from('founder_weekly_checkins').upsert({user_id:userId,week_start:currentWeek,...values,updated_at:new Date().toISOString()},{onConflict:'user_id,week_start'});
+  submit.disabled=false;
+  if(error){message.textContent='Could not save reflection: '+error.message;return;}
+  await load();
  });
  await load();
 }
