@@ -38,7 +38,7 @@
     const close=active&&dist<radius;
     if(close)near.push({p,dist});
     ctx.beginPath();ctx.arc(p.x,p.y,close?1.5+influence*1.1:1.1,0,Math.PI*2);
-    ctx.fillStyle=close?'rgba(255,205,184,'+(0.26+influence*.65)+')':'rgba(210,205,202,.16)';
+    ctx.fillStyle=close?'rgba(255,255,255,'+(0.26+influence*.65)+')':'rgba(255,255,255,.16)';
     ctx.fill();
    }
    // Only the area around the pointer reveals a web of relationships.
@@ -48,7 +48,7 @@
     const strength=(1-a.dist/radius)*(1-b.dist/radius);
     if(strength<.015)continue;
     ctx.beginPath();ctx.moveTo(a.p.x,a.p.y);ctx.lineTo(b.p.x,b.p.y);
-    ctx.lineWidth=.8;ctx.strokeStyle='rgba(255,100,85,'+Math.min(.58,strength*.72)+')';ctx.stroke();
+    ctx.lineWidth=.8;ctx.strokeStyle='rgba(255,255,255,'+Math.min(.58,strength*.72)+')';ctx.stroke();
    }
   };
   raf=requestAnimationFrame(render);
