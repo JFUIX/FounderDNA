@@ -48,7 +48,7 @@
     $('#publish').textContent=editing?'Save & request review':live?'Request publication review ↗':'Save preview milestone ↗';
     $('#cancel-edit').hidden=!editing;
   }
-  fields.forEach(id=>$('#'+id).addEventListener('input',saveDraft));
+  let composerSaveTimer;fields.forEach(id=>$('#'+id).addEventListener('input',()=>{clearTimeout(composerSaveTimer);composerSaveTimer=setTimeout(saveDraft,450);}));addEventListener('pagehide',()=>{if(composerSaveTimer){clearTimeout(composerSaveTimer);saveDraft();}});
   $('#clear-draft').onclick=()=>{if(confirm('Clear the milestone draft saved on this device?'))resetComposer(true);};
   $('#cancel-edit').onclick=()=>{if(confirm('Discard your unsaved edits?'))resetComposer();};
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).close());
