@@ -47,6 +47,8 @@
    if(validScores(latest)){
     const weakest=Object.keys(names).reduce((min,key)=>latest.dimension_scores[key]<latest.dimension_scores[min]?key:min,'clarity');
     $('#priority-title').textContent='Focus on '+names[weakest].toLowerCase()+'.';
+    const strongest=Object.keys(names).reduce((max,key)=>latest.dimension_scores[key]>latest.dimension_scores[max]?key:max,'clarity');
+    const strength=$('#priority-strength');if(strength)strength.textContent='Your strongest area right now: '+names[strongest]+'.';
     $('#priority-description').textContent=actions[weakest];
     $('#priority-section').hidden=false;
     $('#dimensions-section').hidden=false;
