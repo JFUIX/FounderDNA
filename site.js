@@ -7,7 +7,7 @@
   const canvas=document.createElement('canvas');canvas.className='fd-network-cursor fd-dot-matrix';
   canvas.setAttribute('aria-hidden','true');document.body.append(canvas);
   const ctx=canvas.getContext('2d');if(!ctx)return;
-  const cell=17,life=540;let mx=-1000,my=-1000,active=false,last=0;
+  const cell=32,life=650;let mx=-1000,my=-1000,active=false,last=0;
   const fragments=new Map();
   const hash=(x,y)=>{let n=Math.imul(x,374761393)+Math.imul(y,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
   const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)};
@@ -15,9 +15,9 @@
   addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;active=true;
    const cx=Math.floor(mx/cell),cy=Math.floor(my/cell),now=performance.now();
    // Pixelated, asymmetric rectangular scatter with hard edges and occasional gaps.
-   for(let iy=-3;iy<=3;iy++)for(let ix=-5;ix<=5;ix++){
+   for(let iy=-2;iy<=2;iy++)for(let ix=-3;ix<=3;ix++){
     const gx=cx+ix,gy=cy+iy,noise=hash(gx,gy);
-    if(noise<.52||Math.abs(ix)+Math.abs(iy)>7+noise*2)continue;
+    if(noise<.38||Math.abs(ix)+Math.abs(iy)>4+noise*2)continue;
     const key=gx+','+gy;
     fragments.set(key,{gx,gy,born:now,seed:noise});
    }
@@ -31,13 +31,16 @@
    ctx.clearRect(0,0,innerWidth,innerHeight);
    for(const [key,p] of fragments){
     const age=t-p.born;if(age>life){fragments.delete(key);continue}
-    const fade=Math.min(1,(life-age)/190),jitter=p.seed>.86?2:0;
-    const size=p.seed>.87?7:p.seed>.67?4:2.5;
-    const x=p.gx*cell+cell/2-size/2+(p.seed-.5)*jitter;
-    const y=p.gy*cell+cell/2-size/2;
-    const red=p.seed>.91;
-    ctx.fillStyle=red?'rgba(200,0,0,'+(.55*fade)+')':'rgba(255,255,255,'+(.52*fade)+')';
-    ctx.fillRect(Math.round(x),Math.round(y),size,size);
+    const fade=Math.min(1,(life-age)/230);
+    const size=p.seed>.83?30:p.seed>.6?26:22;
+    const x=p.gx*cell+(cell-size)/2;
+    const y=p.gy*cell+(cell-size)/2;
+    const red=p.seed>.89;
+    ctx.lineWidth=red?1.5:1.15;
+    ctx.strokeStyle=red?'rgba(200,0,0,'+(.78*fade)+')':'rgba(255,255,255,'+(.68*fade)+')';
+    ctx.strokeRect(Math.round(x)+.5,Math.round(y)+.5,size,size);
+    ctx.fillStyle=red?'rgba(200,0,0,'+(.10*fade)+')':'rgba(255,255,255,'+(.065*fade)+')';
+    ctx.fillRect(Math.round(x)+1,Math.round(y)+1,size-1,size-1);
    }
   };
   requestAnimationFrame(draw);
