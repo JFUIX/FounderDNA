@@ -32,69 +32,20 @@ body{background:#050505;color:#fff}.assessment-wrap{max-width:1050px;margin:auto
 .assessment-wrap .muted-note{font-size:12px;color:#aaa;margin-top:25px}
 @media(max-width:650px){.result-grid{grid-template-columns:1fr}.assessment-wrap{padding-top:38px}}
 @media(prefers-reduced-motion:reduce){.progress-fill{transition:none}}
+
+.results-hero{display:grid;grid-template-columns:1fr 1fr;gap:35px;align-items:center;margin:25px 0 50px}
+.results-kicker{font-size:13px;color:#ddd}.results-summary{border-left:2px solid #C70102;padding-left:28px}
+.results-summary h2{margin:14px 0}.score-large{line-height:1.2}
+.result-card{padding:25px}.metric-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.metric-head strong{font-size:25px}.metric-track{height:8px;background:#363636;border-radius:20px;margin:18px 0;overflow:hidden}.metric-fill{height:100%;background:linear-gradient(90deg,#8e0505,#f13232);border-radius:20px}
+.action-plan{margin-top:45px;padding:32px;border:1px solid #563030;background:linear-gradient(135deg,#230909,#101010);border-radius:14px}.action-plan h2{margin-top:15px}.action-plan ol{padding-left:23px;line-height:1.8;color:#ddd}.action-plan li{padding:7px 0}
+.assessment-controls{align-items:center}.assessment-controls .secondary-action{min-height:45px;border-radius:8px;padding:10px 20px}
+@media(max-width:650px){.results-hero{grid-template-columns:1fr;gap:10px}.results-summary{border-left:0;border-top:2px solid #C70102;padding:20px 0 0}.action-plan{padding:22px}.assessment-controls>*{flex:1 1 100%;justify-content:center}}
+@media print{body{background:white!important;color:black!important}.assessment-top,.assessment-controls,.muted-note,.assessment-wrap>h1,.assessment-wrap>p,.assessment-wrap>.assessment-eyebrow{display:none!important}.assessment-wrap,.assessment-panel{max-width:none;padding:0;border:0;background:white!important;color:black!important}.result-card,.action-plan{break-inside:avoid;background:white!important;color:black!important;border-color:#999}.result-card p,.action-plan li,.results-hero p{color:black!important}.metric-track{border:1px solid #999}.score-large,.result-card strong,.results-summary h2{color:black!important}}
 </style></head><body>
 <main class="assessment-wrap"><div class="assessment-top"><a class="wordmark" href="./index.html">Founder<span>DNA</span></a><a href="./index.html" class="secondary-action" style="padding:10px 14px;border-radius:8px">Back to website</a></div>
 <div class="assessment-eyebrow" style="margin-top:55px">THE FOUNDERDNA ASSESSMENT</div>
 <h1>Know where you stand.<br><span>Know what to do next.</span></h1>
 <p>Explore your current approach to building a business. Twelve focused questions reveal strengths, gaps, and practical priorities. This is a reflection tool, not a prediction of business success.</p>
-<section class="assessment-panel" id="assessment" aria-live="polite"><div id="assessment-content"></div></section>
+<section class="assessment-panel" id="assessment" aria-live="off"><div id="assessment-content"></div></section>
 <p class="muted-note">Your answers stay in this browser during the assessment. No account, automatic upload, or server-side storage. Results are indicative, not a validated psychological or financial assessment.</p>
-</main><script>
-'use strict';
-(()=>{
-const dimensions=[
- {id:'clarity',label:'Direction & clarity',advice:'Write a one-sentence customer problem, a specific audience, and one measurable goal for the next 30 days.'},
- {id:'validation',label:'Customer validation',advice:'Speak to five potential customers and test one small offer before investing more time or money.'},
- {id:'execution',label:'Execution & prioritization',advice:'Choose one high-impact task for this week, define done, and review the outcome before adding new tasks.'},
- {id:'resilience',label:'Learning & adaptability',advice:'Keep a weekly decision log: what you tried, what happened, what you learned, and what you will change.'}
-];
-const questions=[
- ['clarity','How clearly can you describe the customer you want to serve?'],
- ['clarity','How specifically can you explain the problem your business solves?'],
- ['clarity','How clear is your most important goal for the next month?'],
- ['validation','How much direct feedback have you gathered from potential customers?'],
- ['validation','How well have you tested whether people actually want your solution?'],
- ['validation','How confidently can you describe what customers value enough to pay for?'],
- ['execution','How consistently do you turn your plans into completed actions?'],
- ['execution','How effectively do you prioritize the most important work?'],
- ['execution','How well do you track whether your actions produce useful results?'],
- ['resilience','How effectively do you learn from experiments that do not work?'],
- ['resilience','How willing are you to adjust your approach based on evidence?'],
- ['resilience','How consistently do you reflect on progress and decide what to improve?']
-];
-const options=['Not yet','Just starting','Somewhat','Mostly','Consistently'];
-const answers=Array(questions.length).fill(null);let step=0;
-const root=document.getElementById('assessment-content');
-const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e};
-const btn=(label,cls,fn)=>{const b=make('button',label,cls);b.type='button';b.onclick=fn;return b};
-function render(){
- root.replaceChildren();
- if(step===questions.length)return results();
- const label=make('div','QUESTION '+String(step+1).padStart(2,'0')+' / '+questions.length,'assessment-eyebrow');
- const bar=make('div',undefined,'progress-track');const fill=make('div',undefined,'progress-fill');fill.style.width=(step/questions.length*100)+'%';bar.append(fill);
- root.append(label,bar,make('h2',questions[step][1]));
- const grid=make('div',undefined,'answer-grid');
- options.forEach((value,index)=>{const b=btn(String(index+1).padStart(2,'0')+'  '+value,'answer',()=>{answers[step]=index;render()});b.setAttribute('aria-pressed',String(answers[step]===index));grid.append(b)});
- root.append(grid);
- const controls=make('div',undefined,'assessment-controls');
- const back=btn('Previous','secondary-action',()=>{step=Math.max(0,step-1);render()});back.disabled=step===0;
- const next=btn(step===questions.length-1?'View my results':'Next question','primary-action',()=>{if(answers[step]===null)return;step++;render()});next.disabled=answers[step]===null;
- controls.append(back,next);root.append(controls);
-}
-function results(){
- const scores=dimensions.map(d=>{const indices=questions.map((q,i)=>q[0]===d.id?i:-1).filter(i=>i>=0);const sum=indices.reduce((s,i)=>s+answers[i],0);return {...d,score:Math.round(sum/(indices.length*4)*100)}});
- const overall=Math.round(scores.reduce((s,d)=>s+d.score,0)/scores.length);
- root.append(make('div','YOUR FOUNDERDNA SNAPSHOT','assessment-eyebrow'));
- const number=make('div',undefined,'score-large');number.append(document.createTextNode(overall+'%'),make('small',' reflection score'));root.append(number);
- root.append(make('h2','Your current starting point'));
- root.append(make('p','This score summarizes your self-reported answers across four areas. It is not a measure of personal worth, business viability, or likelihood of success.'));
- const grid=make('div',undefined,'result-grid');scores.forEach(d=>{const card=make('article',undefined,'result-card');card.append(make('span',d.label),make('strong',d.score+'%'),make('p',d.advice));grid.append(card)});root.append(grid);
- const lowest=[...scores].sort((a,b)=>a.score-b.score)[0];const focus=make('p','Suggested first focus: '+lowest.label+'. '+lowest.advice);focus.style.marginTop='28px';root.append(focus);
- const controls=make('div',undefined,'assessment-controls');
- controls.append(btn('Retake assessment','primary-action',()=>{answers.fill(null);step=0;render()}));
- const link=make('a','Request practical support →','secondary-action');link.href='./brief.html?action=support';controls.append(link);
- controls.append(btn('Print / save results','secondary-action',()=>window.print()));root.append(controls);
-}
-render();
-})();
-</script></body></html>
+</main><script src="assessment.js?v=2" defer></script></body></html>
