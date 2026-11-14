@@ -77,6 +77,5 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 .wordmark svg{display:none!important}
 
 
-/* Porter Bold wordmark: self-hosted, optimized glyph subset for FounderDNA. */
-@font-face{font-family:'Porter';src:url('./assets/fonts/Porter-Logo.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
-.wordmark,.wordmark span{font-family:'Porter',Montserrat,Arial,sans-serif;font-weight:700;font-synthesis:none}
+/* Restore readable original mixed-case FounderDNA wordmark. */
+.wordmark,.wordmark span{font-family:Manrope,'DM Sans',Arial,sans-serif;font-weight:800;font-synthesis:weight}
