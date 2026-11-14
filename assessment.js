@@ -30,10 +30,10 @@ function actionRow(){const row=make('div',undefined,'assessment-controls');root.
 function render(){
 root.replaceChildren();
 if(step===questions.length){results();return;}
-const label=make('div','QUESTION '+String(step+1).padStart(2,'0')+' / '+questions.length,'assessment-eyebrow');
+const label=make('div',dimensions.find(d=>d.id===questions[step][0]).label.toUpperCase()+' · QUESTION '+String(step+1).padStart(2,'0')+' / '+questions.length,'assessment-eyebrow');
 const progress=make('div',undefined,'progress-track');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label','Assessment progress');progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(questions.length));progress.setAttribute('aria-valuenow',String(step));const fill=make('div',undefined,'progress-fill');fill.style.width=(step/questions.length*100)+'%';progress.append(fill);
 const heading=make('h2',questions[step][1]);heading.id='question-title';
-root.append(label,progress,heading);
+const progressNote=make('p',Math.round(step/questions.length*100)+'% complete · About '+Math.max(1,Math.ceil((questions.length-step)*0.25))+' min remaining','assessment-progress-note');root.append(label,progress,progressNote,heading);
 const group=make('div',undefined,'answer-grid');group.setAttribute('role','group');group.setAttribute('aria-labelledby','question-title');
 options.forEach((value,index)=>{const b=button(String(index+1).padStart(2,'0')+'  '+value,'answer',()=>{answers[step]=index;render();const selected=root.querySelector('.answer[aria-pressed="true"]');selected?.focus();});b.setAttribute('aria-pressed',String(answers[step]===index));group.append(b);});
 root.append(group);
@@ -55,7 +55,7 @@ const hero=make('div',undefined,'results-hero');const left=make('div');left.appe
 const right=make('div',undefined,'results-summary');right.append(make('span','YOUR CURRENT PROFILE','assessment-eyebrow'),make('h2','Build with more clarity.'));
 right.append(make('p','Your strongest reported area is '+strength.label.toLowerCase()+'. Your first growth opportunity is '+focus.label.toLowerCase()+'.'));
 hero.append(left,right);root.append(hero);
-root.append(make('h2','Your four founder dimensions'));
+const insight=make('section',undefined,'assessment-key-insights');insight.setAttribute('aria-label','Your key takeaways');const strengthCard=make('article');strengthCard.append(make('span','YOUR STRONGEST AREA','assessment-eyebrow'),make('h3',strength.label),make('p','This is the area you rated most confidently. Keep building on it.'));const focusCard=make('article');focusCard.append(make('span','YOUR NEXT PRIORITY','assessment-eyebrow'),make('h3',focus.label),make('p',focus.advice));insight.append(strengthCard,focusCard);root.append(insight);root.append(make('h2','Your four founder dimensions'));
 const grid=make('div',undefined,'result-grid');scores.forEach(d=>grid.append(resultCard(d)));root.append(grid);
 const plan=make('section',undefined,'action-plan');plan.append(make('span','YOUR NEXT 7 DAYS','assessment-eyebrow'),make('h2','Turn insight into action.'));
 const list=make('ol');[
