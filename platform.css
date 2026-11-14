@@ -109,9 +109,12 @@ dialog{background:#141415;border:1px solid #545457;border-radius:17px;box-shadow
 
 /* Homepage hero artwork only: preserve the original grid, spacing and all following sections. */
 body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relative;isolation:isolate;color:#fff}
-.hero.founder-texture-hero:before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);background:linear-gradient(90deg,rgba(5,5,5,.85) 0%,rgba(5,5,5,.7) 45%,rgba(5,5,5,.46) 100%),url('assets/founderdna-hero.png?v=2') center center/cover no-repeat,#a50909;pointer-events:none}
+.hero.founder-texture-hero:before{content:"";position:absolute;z-index:0;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);background:linear-gradient(90deg,rgba(5,5,5,.85) 0%,rgba(5,5,5,.7) 45%,rgba(5,5,5,.46) 100%),url('assets/founderdna-hero.png?v=2') center center/cover no-repeat,#a50909;pointer-events:none}
 .hero.founder-texture-hero .lead,.hero.founder-texture-hero .trust-row{color:#f1e5e5}
 .hero.founder-texture-hero .eyebrow{color:#fff}
 .hero.founder-texture-hero h1 em{color:#ff3838}
 .hero.founder-texture-hero .btn.secondary{border-color:#fff9;color:#fff;background:#05050550}
 @media(max-width:760px){.hero.founder-texture-hero:before{background-position:center,center}}
+
+/* Keep the banner above the page background, but below every hero content element. */
+.hero.founder-texture-hero>*{position:relative;z-index:1}
