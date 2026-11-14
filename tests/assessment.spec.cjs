@@ -81,3 +81,23 @@ test('private progress report controls are present and hidden before sign-in',as
  await expect(page.locator('#report-print')).toBeDisabled();
  await expect(page.locator('#dashboard-content')).toBeHidden();
 });
+
+const mockSupabaseUMD = "(() => {\nconst state={assessment_results:[{id:'a1',overall_score:75,dimension_scores:{clarity:75,validation:50,execution:100,resilience:75},created_at:'2026-11-10T00:00:00Z'}],founder_action_tasks:[],founder_weekly_checkins:[]};\nconst user={id:'test-user-a',email:'test-a@example.invalid'};\nconst table=name=>({\n select(){return this},order(){return this},limit(){return Promise.resolve({data:state[name]||[],error:null})},\n insert(row){state[name].push({...row,id:'test-'+state[name].length,created_at:new Date().toISOString()});return Promise.resolve({data:null,error:null})},\n upsert(row){const old=state[name].find(x=>x.user_id===row.user_id&&x.week_start===row.week_start);if(old)Object.assign(old,row);else state[name].push({...row,id:'week-'+state[name].length});return Promise.resolve({data:null,error:null})},\n update(row){this.updateRow=row;return this},delete(){this.deleting=true;return this},\n eq(key,value){const row=state[name].find(x=>x[key]===value);if(this.deleting)state[name]=state[name].filter(x=>x[key]!==value);else if(row&&this.updateRow)Object.assign(row,this.updateRow);return Promise.resolve({data:null,error:null})}\n});\nwindow.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user}},error:null}),getUser:async()=>({data:{user},error:null}),signOut:async()=>({error:null})},rpc:async()=>({data:false,error:null}),from:table})};\n})();";
+test('authenticated dashboard task, weekly check-in and report export work with a mocked backend',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.3/dist/umd/supabase.js',route=>route.fulfill({status:200,contentType:'application/javascript',body:mockSupabaseUMD}));
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.locator('#dashboard-content')).toBeVisible();
+ await expect(page.locator('#latest-score')).toHaveText('75%');
+ await page.locator('#task-title').fill('Interview three customers');
+ await page.locator('#task-goal').fill('Validate demand');
+ await page.getByRole('button',{name:'Add task'}).click();
+ await expect(page.locator('#task-list')).toContainText('Interview three customers');
+ await page.locator('#task-list input[type=checkbox]').check();
+ await expect(page.locator('#task-message')).toContainText('1 of 1');
+ await page.locator('#checkin-win').fill('Finished customer interviews');
+ await page.getByRole('button',{name:"Save this week's reflection"}).click();
+ await expect(page.locator('#checkin-history')).toContainText('Finished customer interviews');
+ await expect(page.locator('#report-status')).toContainText('ready');
+ const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#report-download').click()]);
+ expect(file.suggestedFilename()).toBe('FounderDNA-progress-report.md');
+});
