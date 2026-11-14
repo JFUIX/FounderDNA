@@ -123,3 +123,13 @@ test('report export includes saved assessment and reflection data',async({page})
  expect(text).toContain('Latest saved assessment: 75%');
  expect(text).toContain('Founder Progress Report');
 });
+
+
+test('Porter wordmark font loads and public navigation has no broken internal links',async({page,request})=>{
+ await page.goto('http://127.0.0.1:8765/index.html');
+ await expect(page.locator('.wordmark').first()).toHaveText('FounderDNA');
+ const loaded=await page.evaluate(async()=>{await document.fonts.load('700 24px Porter');return document.fonts.check('700 24px Porter')});
+ expect(loaded).toBe(true);
+ const links=await page.locator('a[href]').evaluateAll(nodes=>[...new Set(nodes.map(a=>a.getAttribute('href')).filter(h=>h&&h.startsWith('./')&&!h.startsWith('./#')).map(h=>h.split('#')[0].split('?')[0]))]);
+ for(const link of links){const response=await request.get('http://127.0.0.1:8765/'+link.slice(2));expect(response.status(),link).toBeLessThan(400);}
+});
