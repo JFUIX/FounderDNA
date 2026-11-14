@@ -4,7 +4,7 @@ const url = 'file://' + path.resolve(__dirname, '..', 'assessment.html');
 test('all-zero answers produce 0%, including valid zero responses', async ({page}) => {
  await page.goto(url);
  for(let i=0;i<12;i++){
-  await page.getByRole('button',{name:/01  Not yet/}).click();
+  await page.getByRole('button',{name:/01\s+Not yet/}).click();
   await page.getByRole('button',{name:i===11?'View my results':'Next question'}).click();
  }
  await expect(page.locator('.score-large')).toContainText('0%');
@@ -14,7 +14,7 @@ test('all-zero answers produce 0%, including valid zero responses', async ({page
 test('highest answers produce 100%, retake clears answers',async ({page})=>{
  await page.goto(url);
  for(let i=0;i<12;i++){
-  await page.getByRole('button',{name:/05  Consistently/}).click();
+  await page.getByRole('button',{name:/05\s+Consistently/}).click();
   await page.getByRole('button',{name:i===11?'View my results':'Next question'}).click();
  }
  await expect(page.locator('.score-large')).toContainText('100%');
@@ -25,10 +25,10 @@ test('highest answers produce 100%, retake clears answers',async ({page})=>{
 test('previous restores selected answer and incomplete questions cannot advance',async ({page})=>{
  await page.goto(url);
  await expect(page.getByRole('button',{name:'Next question'})).toBeDisabled();
- await page.getByRole('button',{name:/03  Somewhat/}).click();
+ await page.getByRole('button',{name:/03\s+Somewhat/}).click();
  await page.getByRole('button',{name:'Next question'}).click();
  await page.getByRole('button',{name:'Previous'}).click();
- await expect(page.getByRole('button',{name:/03  Somewhat/})).toHaveAttribute('aria-pressed','true');
+ await expect(page.getByRole('button',{name:/03\s+Somewhat/})).toHaveAttribute('aria-pressed','true');
 });
 for(const width of [320,390,768,1440]){
  test('no horizontal overflow at '+width+'px',async ({page})=>{
@@ -40,7 +40,7 @@ for(const width of [320,390,768,1440]){
 }
 test('results download works without sending data to backend',async ({page})=>{
  await page.goto(url);
- for(let i=0;i<12;i++){await page.getByRole('button',{name:/03  Somewhat/}).click();await page.getByRole('button',{name:i===11?'View my results':'Next question'}).click();}
+ for(let i=0;i<12;i++){await page.getByRole('button',{name:/03\s+Somewhat/}).click();await page.getByRole('button',{name:i===11?'View my results':'Next question'}).click();}
  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download results'}).click()]);
  expect(download.suggestedFilename()).toBe('FounderDNA-reflection-results.txt');
  await expect(page.getByText('Turn insight into action.')).toBeVisible();
