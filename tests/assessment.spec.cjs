@@ -44,3 +44,17 @@ test('results download works without sending data to backend',async ({page})=>{
  expect(download.suggestedFilename()).toBe('FounderDNA-reflection-results.txt');
  await expect(page.getByText('Turn insight into action.')).toBeVisible();
 });
+
+test('dashboard renders its public shell and remains within mobile viewport',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.getByRole('heading',{name:/Know your progress/})).toBeVisible();
+ await expect(page.locator('#dashboard-status')).toBeVisible();
+ await expect(page.locator('#dashboard-content')).toBeHidden();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+});
+test('dashboard keeps private content hidden before authentication',async({page})=>{
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.locator('#dashboard-content')).toBeHidden();
+ await expect(page.locator('#dashboard-history')).toBeHidden();
+});
