@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My FounderDNA | Private founder dashboard</title>
+<meta name="description" content="Your private FounderDNA dashboard: assessment history, progress comparisons, and business-support requests.">
+<meta name="theme-color" content="#050505"><link rel="stylesheet" href="platform.css?v=7">
+<style>
+.dashboard-wrap{max-width:1250px;margin:auto;padding:70px clamp(20px,4vw,64px) 100px}
+.dashboard-wrap h1{font-size:clamp(42px,6vw,80px);max-width:900px}.dashboard-wrap h1 span{color:#ed3535}
+.dashboard-intro{max-width:720px;font-size:17px}
+.dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:34px 0}
+.dashboard-card{background:#141415;border:1px solid #3c3c40;border-radius:18px;padding:28px;min-width:0}
+.dashboard-card h2{font-size:24px;margin-bottom:15px}.dashboard-card p{font-size:13px}
+.dashboard-score{font-size:clamp(45px,5vw,70px);line-height:1.1;font-weight:800;letter-spacing:-.06em;color:#fff}
+.dashboard-score small{font-size:13px;letter-spacing:normal;display:block;margin-top:12px}
+.dashboard-status{padding:16px 20px;border-left:3px solid #C80000;background:#1c1313;border-radius:5px;margin:25px 0;color:#eee}
+.dashboard-list{display:grid;gap:10px}.dashboard-entry{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px;border:1px solid #3b3b3e;border-radius:12px;background:#151516}
+.dashboard-entry strong{font-size:21px}.dashboard-entry time{color:#c8c8c8;font-size:13px}
+.dashboard-section{margin-top:54px}.dashboard-section h2{font-size:clamp(28px,3.4vw,42px)}
+.dashboard-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.dashboard-dimension{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;margin:15px 0}
+.dashboard-dimension span{font-size:13px}.dashboard-dimension strong{font-size:13px}
+.dashboard-dimension em{font-size:12px;font-style:normal;color:#ff8383;min-width:55px;text-align:right}
+.dashboard-track{height:6px;border-radius:9px;background:#343436;overflow:hidden;grid-column:1/-1}.dashboard-track>div{height:100%;background:#C80000}
+.dashboard-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+@media(max-width:860px){.dashboard-grid{grid-template-columns:1fr 1fr}.dashboard-compare{grid-template-columns:1fr}}
+@media(max-width:540px){.dashboard-grid{grid-template-columns:1fr}.dashboard-entry{flex-wrap:wrap}.dashboard-entry>*{flex:1 1 auto}}
+</style>
+<script src="community-config.js" defer></script><script src="site.js?v=4" defer></script><script src="dashboard.js?v=1" defer></script>
+</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head"><div class="head-inner"><a class="wordmark" href="./index.html" aria-label="FounderDNA home">Founder<span>DNA</span></a>
+<nav class="main-nav" aria-label="Main"><a href="./assessment.html">Assessment</a><a href="./dashboard.html" aria-current="page">My dashboard</a><a href="./requests.html">My Progress</a><a href="./brief.html">Get support</a><a href="./index.html">Home</a><button class="btn secondary" type="button" data-auth>Sign in</button></nav></div></header>
+<main id="main" class="dashboard-wrap">
+<span class="eyebrow">YOUR PRIVATE WORKSPACE</span>
+<h1>Know your progress.<br><span>Choose your next move.</span></h1>
+<p class="dashboard-intro">Your FounderDNA assessments and practical support in one place. Your assessment scores are personal reflections, not predictions of business success.</p>
+<div id="dashboard-status" class="dashboard-status" role="status">Checking your account…</div>
+<div id="dashboard-content" hidden>
+<section class="dashboard-grid" aria-label="Assessment overview">
+<div class="dashboard-card"><span class="eyebrow">LATEST REFLECTION</span><div class="dashboard-score" id="latest-score">—</div><p id="latest-date">Complete and save an assessment to see your score.</p></div>
+<div class="dashboard-card"><span class="eyebrow">ASSESSMENTS SAVED</span><div class="dashboard-score" id="assessment-count">0</div><p>Saved privately to your account.</p></div>
+<div class="dashboard-card"><span class="eyebrow">PROGRESS SINCE FIRST RESULT</span><div class="dashboard-score" id="score-change">—</div><p id="comparison-note">Complete at least two assessments to compare your progress.</p></div>
+</section>
+<section class="dashboard-section" id="dimensions-section" hidden><h2>Your founder dimensions</h2><div class="dashboard-compare" id="dimensions"></div></section>
+<section class="dashboard-section"><h2>Recent assessments</h2><div id="dashboard-history" class="dashboard-list"></div><div class="dashboard-actions"><a class="btn" href="./assessment.html">Take an assessment</a><a class="btn secondary" href="./requests.html">Open My Progress</a></div></section>
+<section class="dashboard-section"><h2>From insight to action</h2><div class="dashboard-grid">
+<article class="dashboard-card"><span class="eyebrow">01 / UNDERSTAND</span><h2>Review your profile</h2><p>Use your four dimensions to identify the next skill or assumption to work on.</p><a class="btn secondary" href="./assessment.html">Explore assessment</a></article>
+<article class="dashboard-card"><span class="eyebrow">02 / BUILD</span><h2>Request support</h2><p>Prepare a private business brief when you need practical help moving forward.</p><a class="btn secondary" href="./brief.html?action=support">Create a brief</a></article>
+<article class="dashboard-card"><span class="eyebrow">03 / TRACK</span><h2>Follow your requests</h2><p>Check your business-support submissions and any reviewer updates.</p><a class="btn secondary" href="./requests.html">View requests</a></article>
+</div></section>
+</div>
+</main>
+<footer class="footer"><div class="wrap"><span>FounderDNA. Less guesswork. More doing.</span><nav><a href="./privacy.html">Privacy</a><a href="./about.html">About</a><a href="./index.html">Home</a></nav></div></footer>
+<dialog id="site-auth"><button type="button" class="close" id="site-auth-close" aria-label="Close sign in">×</button><span class="eyebrow">PRIVATE ACCOUNT</span><h2>Sign in to continue.</h2><p>We'll email you a secure sign-in link.</p><form id="site-auth-form"><label>Your name<input id="site-name" maxlength="60" autocomplete="name" required></label><label>Email<input id="site-email" type="email" autocomplete="email" required></label><button class="btn" type="submit">Email me a sign-in link</button><p id="site-auth-status" role="status"></p></form></dialog><div id="site-toast" class="toast" role="status" hidden></div>
+</body></html>
