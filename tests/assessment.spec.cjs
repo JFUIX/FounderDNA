@@ -65,3 +65,11 @@ test('action plan form exists and stays private while signed out',async({page})=
  await expect(page.locator('#task-title')).toHaveAttribute('maxlength','180');
  await expect(page.locator('#dashboard-content')).toBeHidden();
 });
+
+test('weekly check-in interface is present but hidden before sign-in',async({page})=>{
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.locator('#checkin-form')).toHaveCount(1);
+ await expect(page.locator('#checkin-win')).toHaveAttribute('maxlength','1000');
+ await expect(page.locator('#checkin-focus')).toHaveAttribute('maxlength','500');
+ await expect(page.locator('#dashboard-content')).toBeHidden();
+});
