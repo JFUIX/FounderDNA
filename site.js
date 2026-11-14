@@ -1,49 +1,57 @@
 'use strict';
 (()=>{
  const $=s=>document.querySelector(s);
- // Connected people: a delicate triangulated network of glowing points, following the pointer.
+ // A quiet, page-wide matrix of points. Cursor proximity pulls points into a connected network.
  const startNetworkCursor=()=>{
   if(!matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)').matches)return;
-  const canvas=document.createElement('canvas');canvas.className='fd-network-cursor';
+  const canvas=document.createElement('canvas');canvas.className='fd-network-cursor fd-dot-matrix';
   canvas.setAttribute('aria-hidden','true');document.body.append(canvas);
   const ctx=canvas.getContext('2d');if(!ctx)return;
-  const points=[
-   [-90,-25],[-66,-72],[-28,-102],[22,-100],[70,-75],[94,-25],
-   [-91,30],[-65,77],[-27,100],[25,98],[72,67],[95,28],
-   [-42,-30],[5,-44],[49,-22],[-44,28],[4,25],[51,31],[0,0]
-  ].map(([x,y],i)=>({ox:x,oy:y,x:0,y:0,i}));
-  let mx=-300,my=-300,x=-300,y=-300,visible=false,last=0;
-  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)};
-  resize();addEventListener('resize',resize,{passive:true});
-  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;visible=true;canvas.style.opacity='1'},{passive:true});
-  document.addEventListener('pointerleave',()=>{visible=false;canvas.style.opacity='0'});
-  addEventListener('blur',()=>{visible=false;canvas.style.opacity='0'});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){visible=false;canvas.style.opacity='0'}});
-  const render=t=>{
-   requestAnimationFrame(render);if(!visible)return;
-   const dt=Math.min(t-last||16,40);last=t;
-   x+=(mx-x)*Math.min(.19,dt*.012);y+=(my-y)*Math.min(.19,dt*.012);
-   ctx.clearRect(0,0,innerWidth,innerHeight);
-   const time=t*.001;
-   points.forEach(p=>{p.x=x+p.ox+Math.sin(time*.65+p.i*1.8)*3;p.y=y+p.oy+Math.cos(time*.58+p.i*1.4)*3});
-   // Connect nearby nodes into the airy, overlapping triangular mesh in the reference.
-   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
-    const a=points[i],b=points[j],dist=Math.hypot(a.x-b.x,a.y-b.y);
-    if(dist>108)continue;
-    const alpha=(1-dist/150)*.24;
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-    ctx.strokeStyle='rgba(255,224,203,'+alpha.toFixed(3)+')';ctx.lineWidth=.75;ctx.stroke();
-   }
-   points.forEach(p=>{
-    const central=p.i===18,rad=central?3.6:(p.i%4===0?2.5:1.9);
-    ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);
-    ctx.fillStyle=central?'rgba(255,188,107,.98)':'rgba(255,237,216,.88)';ctx.fill();
-   });
-   const glow=ctx.createRadialGradient(x,y,0,x,y,20);
-   glow.addColorStop(0,'rgba(255,125,58,.28)');glow.addColorStop(1,'rgba(255,125,58,0)');
-   ctx.fillStyle=glow;ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fill();
+  let points=[],cols=0,rows=0,mx=-1000,my=-1000,active=false,raf=0,last=0;
+  const gap=52,radius=185;
+  const resize=()=>{
+   const w=innerWidth,h=innerHeight,d=Math.min(devicePixelRatio||1,2);
+   canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);
+   ctx.setTransform(d,0,0,d,0,0);
+   cols=Math.ceil(w/gap)+1;rows=Math.ceil(h/gap)+1;points=[];
+   const x0=(w-(cols-1)*gap)/2,y0=(h-(rows-1)*gap)/2;
+   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++)
+    points.push({ox:x0+col*gap,oy:y0+row*gap,x:x0+col*gap,y:y0+row*gap});
   };
-  requestAnimationFrame(render);
+  resize();addEventListener('resize',resize,{passive:true});
+  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;mx=e.clientX;my=e.clientY;active=true},{passive:true});
+  document.addEventListener('pointerleave',()=>{active=false});
+  addEventListener('blur',()=>{active=false});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)last=0});
+  const render=t=>{
+   raf=requestAnimationFrame(render);
+   if(document.hidden||t-last<28)return;last=t;
+   ctx.clearRect(0,0,innerWidth,innerHeight);
+   const near=[];
+   for(const p of points){
+    const dx=mx-p.ox,dy=my-p.oy,dist=Math.hypot(dx,dy);
+    const influence=active?Math.max(0,1-dist/radius):0;
+    // Each nearby dot is gently attracted toward the pointer, then springs back.
+    const pull=influence*influence*23;
+    const tx=p.ox+(dist?dx/dist*pull:0),ty=p.oy+(dist?dy/dist*pull:0);
+    p.x+=(tx-p.x)*.18;p.y+=(ty-p.y)*.18;
+    const close=active&&dist<radius;
+    if(close)near.push({p,dist});
+    ctx.beginPath();ctx.arc(p.x,p.y,close?1.5+influence*1.1:1.1,0,Math.PI*2);
+    ctx.fillStyle=close?'rgba(255,205,184,'+(0.26+influence*.65)+')':'rgba(210,205,202,.16)';
+    ctx.fill();
+   }
+   // Only the area around the pointer reveals a web of relationships.
+   for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++){
+    const a=near[i],b=near[j],dist=Math.hypot(a.p.x-b.p.x,a.p.y-b.p.y);
+    if(dist>83)continue;
+    const strength=(1-a.dist/radius)*(1-b.dist/radius);
+    if(strength<.015)continue;
+    ctx.beginPath();ctx.moveTo(a.p.x,a.p.y);ctx.lineTo(b.p.x,b.p.y);
+    ctx.lineWidth=.8;ctx.strokeStyle='rgba(255,100,85,'+Math.min(.58,strength*.72)+')';ctx.stroke();
+   }
+  };
+  raf=requestAnimationFrame(render);
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startNetworkCursor,{once:true});else startNetworkCursor();
 
