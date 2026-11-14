@@ -101,3 +101,25 @@ test('authenticated dashboard task, weekly check-in and report export work with 
  const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#report-download').click()]);
  expect(file.suggestedFilename()).toBe('FounderDNA-progress-report.md');
 });
+
+
+for(const width of [320,390,768,1440]){
+ test('authenticated dashboard and report fit '+width+'px viewport',async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.3/dist/umd/supabase.js',route=>route.fulfill({status:200,contentType:'application/javascript',body:mockSupabaseUMD}));
+  await page.goto('http://127.0.0.1:8765/dashboard.html');
+  await expect(page.locator('#dashboard-content')).toBeVisible();
+  await expect(page.locator('#report-download')).toBeEnabled();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+ });
+}
+test('report export includes saved assessment and reflection data',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.3/dist/umd/supabase.js',route=>route.fulfill({status:200,contentType:'application/javascript',body:mockSupabaseUMD}));
+ await page.goto('http://127.0.0.1:8765/dashboard.html');
+ await expect(page.locator('#report-download')).toBeEnabled();
+ const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#report-download').click()]);
+ expect(download.suggestedFilename()).toBe('FounderDNA-progress-report.md');
+ const fs=require('node:fs');const text=fs.readFileSync(await download.path(),'utf8');
+ expect(text).toContain('Latest saved assessment: 75%');
+ expect(text).toContain('Founder Progress Report');
+});
