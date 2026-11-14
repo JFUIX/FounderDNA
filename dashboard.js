@@ -82,5 +82,49 @@
    row.append(remove);history.append(row);
   }
   status.hidden=true;content.hidden=false;
+  await initializeTasks(db,auth.data.user.id);
  }catch(error){status.textContent='Your private dashboard could not load. Please refresh or try again later.';console.error('FounderDNA dashboard:',error);}
+async function initializeTasks(db,userId){
+ const form=$('#task-form'),list=$('#task-list'),message=$('#task-message');
+ const report=msg=>{message.textContent=msg;};
+ const load=async()=>{
+  const {data,error}=await db.from('founder_action_tasks').select('id,title,goal,completed,created_at').order('created_at',{ascending:false}).limit(100);
+  if(error){report('Tasks could not load: '+error.message);return;}
+  list.replaceChildren();
+  const tasks=data||[];
+  const done=tasks.filter(t=>t.completed).length;
+  report(tasks.length?done+' of '+tasks.length+' recent tasks completed'+(tasks.length===100?' (showing latest 100)':'')+'.':'Add your first action to start building momentum.');
+  for(const task of tasks){
+   const row=text('div','','task-item'+(task.completed?' is-done':''));
+   const check=document.createElement('input');check.type='checkbox';check.checked=task.completed;check.setAttribute('aria-label','Mark '+task.title+' complete');
+   check.addEventListener('change',async()=>{
+    check.disabled=true;
+    const {error}=await db.from('founder_action_tasks').update({completed:check.checked,updated_at:new Date().toISOString()}).eq('id',task.id);
+    if(error){check.checked=!check.checked;report('Could not update task: '+error.message);}
+    await load();
+   });
+   const details=text('div','','task-details');details.append(text('strong',task.title));if(task.goal)details.append(text('small','Goal: '+task.goal));
+   const remove=text('button','Delete');remove.type='button';remove.setAttribute('aria-label','Delete task '+task.title);
+   remove.addEventListener('click',async()=>{
+    if(!confirm('Delete this task?'))return;
+    remove.disabled=true;
+    const {error}=await db.from('founder_action_tasks').delete().eq('id',task.id);
+    if(error){remove.disabled=false;report('Could not delete task: '+error.message);return;}
+    await load();
+   });
+   row.append(check,details,remove);list.append(row);
+  }
+ };
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const title=$('#task-title').value.trim(),goal=$('#task-goal').value.trim();
+  if(!title||title.length>180||goal.length>240){report('Please check your task title and goal.');return;}
+  const submit=form.querySelector('button[type="submit"]');submit.disabled=true;
+  const {error}=await db.from('founder_action_tasks').insert({user_id:userId,title,goal});
+  submit.disabled=false;
+  if(error){report('Could not save task: '+error.message);return;}
+  form.reset();await load();
+ });
+ await load();
+}
 })();
