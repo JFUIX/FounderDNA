@@ -38,6 +38,7 @@
     updateComposer();$('#draft-status').textContent='Your saved draft has been restored. Nothing has been published.';
   }
   function resetComposer(clearBusiness=false){
+    clearTimeout(composerSaveTimer);composerSaveTimer=null;
     editing=null;$('#headline').value='';$('#story').value='';$('#category').value='Launch';
     if(clearBusiness)$('#business').value='';
     try{localStorage.removeItem(draftKey);}catch{}
