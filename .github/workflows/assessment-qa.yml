@@ -5,6 +5,9 @@ on:
     paths:
       - 'assessment.html'
       - 'assessment.js'
+      - 'dashboard.html'
+      - 'dashboard.js'
+      - 'community.js'
       - 'platform.css'
       - 'tests/**'
       - '.github/workflows/assessment-qa.yml'
@@ -22,6 +25,14 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Start local web server
         run: python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/founderdna-http.log 2>&1 &
+      - name: Wait for local web server
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8765/assessment.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/founderdna-http.log
+          exit 1
       - name: Run assessment tests
         run: npx playwright test tests/assessment.spec.cjs --reporter=list
       - name: Upload failure diagnostics
