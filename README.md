@@ -43,3 +43,7 @@ The original historical question bank and scoring formula were not recoverable f
 
 ## Maintainer
 [JFUIX](https://github.com/JFUIX)
+
+## QA automation
+
+The `.github/workflows/assessment-qa.yml` workflow runs Playwright Chromium tests on relevant commits to `main`. Review the Actions run status and logs before treating the browser QA as passed. End-to-end authenticated flows require dedicated test identities and are not covered by the public assessment test suite.
