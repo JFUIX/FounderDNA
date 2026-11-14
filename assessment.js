@@ -60,9 +60,9 @@ const grid=make('div',undefined,'result-grid');scores.forEach(d=>grid.append(res
 const plan=make('section',undefined,'action-plan');plan.append(make('span','YOUR NEXT 7 DAYS','assessment-eyebrow'),make('h2','Turn insight into action.'));
 const list=make('ol');[
 'Day 1: '+focus.advice,
-'Days 2–3: Complete one small action related to this priority. Record what actually happened.',
-'Days 4–5: Ask one relevant person for feedback and compare it with your assumptions.',
-'Days 6–7: Review what changed, choose one measurable next step, and set a date to revisit it.'
+'Days 2 and 3: Complete one small action related to this priority. Record what actually happened.',
+'Days 4 and 5: Ask one relevant person for feedback and compare it with your assumptions.',
+'Days 6 and 7: Review what changed, choose one measurable next step, and set a date to revisit it.'
 ].forEach(item=>list.append(make('li',item)));plan.append(list);root.append(plan);
 const controls=actionRow();
 controls.append(button('Download results','primary-action',()=>download({scores,overall,focus,strength})));
