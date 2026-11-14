@@ -25,3 +25,6 @@ body{background:var(--bg);color:var(--ink)}
 a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline-color:#ff6767}
 @media(max-width:850px){.hero{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Assessment-first, full-width editorial hero */
+.hero{display:block;padding:clamp(90px,12vw,170px) 0}.hero>div{max-width:1060px}.hero h1{font-size:clamp(46px,7.5vw,112px);line-height:1.05}.hero .lead{max-width:760px;font-size:clamp(16px,1.6vw,21px)}
