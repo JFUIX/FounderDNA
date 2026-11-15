@@ -1,50 +1,54 @@
-/* Warm burgundy surfaces shared by every FounderDNA page. Print stays unchanged. */
+/* Extend the hero's scarlet lighting across neutral dark surfaces. */
 @media screen {
- :root{--bg:#1b0a10;--surface:#2a111a;--panel:#2a111a;--raised:#351620;--line:#59303e;--ink:#fff7fa;--muted:#cfbbc3;--gold:#f4b2bf}
- body{background:var(--bg);color:var(--ink)}
- .site-head,.top{background:#220c15;border-bottom-color:#59303e}
- .footer{background:#240c15;border-top-color:#59303e}
- .community-footer{border-top-color:#59303e}
+ :root{--bg:#050505;--surface:#111112;--panel:#111111;--raised:#19191b;--line:#37373a;--ink:#fff;--muted:#c2c2c6;--gold:#e8e8e8}
+ body{background:#050505;color:var(--ink)}
+ main{position:relative;isolation:isolate}
+ main::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(ellipse 750px 360px at 2% 24%,#f20b0b26,transparent),
+   radial-gradient(ellipse 750px 340px at 98% 76%,#f20b0b21,transparent);
+  background-size:100% 1800px;background-repeat:repeat-y;
+ }
+ .site-head,.top{background:linear-gradient(90deg,#ed080808,transparent 65%),#080808f5;border-bottom-color:#ef17172b}
+ .footer{background:radial-gradient(ellipse at 90% 100%,#ef08081c,transparent 65%),#080808;border-top-color:#ed16162e}
+ .community-footer{border-top-color:#ed16162e}
  .pillar,.action-card,.fund-card,.dna-card,.panel,.request-card,.form-steps,.example,
  .assessment-panel,.dashboard-card,.task-panel,.fd-journey-grid article{
-  background:linear-gradient(145deg,#30121e,#241018);border-color:#603444;
-  box-shadow:0 14px 38px #0d030640,inset 0 1px 0 #ffbdcc08;
+  background:radial-gradient(ellipse at 0 0,#ef101010,transparent 70%),#111112;
+  border-color:#ffffff2b;box-shadow:0 14px 38px #0005,inset 0 1px 0 #ff202012;
  }
- .btn.secondary:hover,.btn.quiet:hover{background:#411c2b;border-color:#b0788b}
- .progress-track,.metric-track,.dashboard-track{background:#633344}
- .action-card:hover,.pillar:hover{background:#391520;border-color:#a65369}
  .result-card,.history-item,.assessment-key-insights article,.dashboard-entry,
  .task-item,.checkin-entry,.report-stat,.report-notes article{
-  background:#32151f;border-color:#67404d;
+  background:radial-gradient(ellipse at 0 0,#ef10100a,transparent 70%),#181819;border-color:#ffffff2b;
  }
- .answer{background:#32151f;border-color:#765060}
- .answer:hover{background:#411c2b;border-color:#ce788f}
- .answer[aria-pressed="true"]{background:#5d1b2e;border-color:#ff8da5}
- .action-plan,.dashboard-priority{background:linear-gradient(120deg,#471526,#2a111b);border-color:#8d455a}
- .dashboard-status,.brief-guide,.response-expectations{background:#35121f;border-left-color:#ff8da5}
- .form-steps li.active{background:#531c30;border-left-color:#ff6b8b}
- .pillar .number,.left>.eyebrow{color:#d6aeba}
- input:not([type=checkbox]):not([type=radio]),textarea,select{
-  background:#210d15;border-color:#765060;color:#fff7fa;
- }
- input::placeholder,textarea::placeholder{color:#bca4ae}
- dialog{background:#2a111b;border-color:#805062}
- dialog::backdrop{background:#10040ad9}
- .intro,.community-note,.empty{border-color:#59303e}
- .badge,.tag{border-color:#805062}
- .reply,.notification{border-color:#67404d}
- .notification.unread{background:#471526}
+ .action-card:hover,.pillar:hover{border-color:#ff363670;box-shadow:0 0 30px #f20b0b18}
+ .answer{background:#191919;border-color:#494949}
+ .answer:hover{background:linear-gradient(#ef10100d,#ef10100d),#191919;border-color:#ed303080}
+ .answer[aria-pressed="true"]{background:linear-gradient(#f0101026,#f0101026),#191919;border-color:#ff5757}
+ .action-plan,.dashboard-priority{background:radial-gradient(ellipse at 0 0,#ed09091c,transparent 75%),#111112;border-color:#ef333352}
+ .dashboard-status,.brief-guide,.response-expectations{background:linear-gradient(90deg,#ed080810,transparent),#111112;border-left-color:#ff7373}
+ .form-steps li.active{background:linear-gradient(90deg,#f0101021,transparent),#151515;border-left-color:#f22}
+ input:not([type=checkbox]):not([type=radio]),textarea,select{background:#111112;border-color:#565656;color:#fff}
+ input::placeholder,textarea::placeholder{color:#aaa}
+ dialog{background:radial-gradient(ellipse at 0 0,#ed101012,transparent 70%),#141415;border-color:#545457}
+ dialog::backdrop{background:#000c}
  .hero.founder-texture-hero::before{
-  background:linear-gradient(180deg,#1b0a10 0%,#1b0a101a 22%,#1b0a1014 62%,#1b0a10 100%),
-   linear-gradient(90deg,#1b0a10d9,#350b1959),
-   url('assets/founderdna-hero.webp') center 42%/cover no-repeat;
-  background-color:#38101f;
+  background:linear-gradient(90deg,#050505b8,#05050573 45%,#05050540),url('assets/founderdna-hero.webp') center 42%/cover no-repeat;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 66%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 12%,#000 66%,transparent);
  }
- .hero.founder-texture-hero .btn.secondary{background:#2a0d1980;border-color:#cf9eaf}
+ /* A pool of red light continues below the artwork instead of ending at a rectangle. */
+ body:has(.founder-texture-hero) main::before{
+  background-image:radial-gradient(ellipse 60% 620px at 55% 820px,#f20b0b30,transparent 85%),
+   radial-gradient(ellipse 750px 360px at 2% 24%,#f20b0b26,transparent),
+   radial-gradient(ellipse 750px 340px at 98% 76%,#f20b0b21,transparent);
+  background-size:100% 1800px;background-repeat:repeat-y;
+ }
+ .hero.founder-texture-hero .btn.secondary{background:#05050566;border-color:#ffffff80}
 }
 @media screen and (max-width:760px){
  .hero.founder-texture-hero::before{
-  background-image:linear-gradient(180deg,#1b0a10 0%,#1b0a101a 22%,#1b0a1014 62%,#1b0a10 100%),
-   linear-gradient(90deg,#1b0a10d9,#350b1959),url('assets/founderdna-hero-mobile.webp');
+  background-image:linear-gradient(90deg,#050505b8,#05050573 45%,#05050540),url('assets/founderdna-hero-mobile.webp');
  }
+ main::before,body:has(.founder-texture-hero) main::before{background-size:100% 1500px}
 }
