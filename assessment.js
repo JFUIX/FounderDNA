@@ -49,23 +49,23 @@ card.append(make('p',d.advice));return card;
 }
 function results(){
 const {scores,overall}=calculate();
-const ordered=[...scores].sort((a,b)=>a.score-b.score);const focus=ordered[0];const strength=ordered[ordered.length-1];
+const insights=window.FDScoreInsights(scores);
 root.append(make('div','YOUR FOUNDERDNA PROFILE','assessment-eyebrow'));
 const hero=make('div',undefined,'results-hero');const left=make('div');left.append(make('div','Your reflection score','results-kicker'));const num=make('div',undefined,'score-large');num.append(document.createTextNode(overall+'%'));left.append(num);left.append(make('p','Based on 12 self-reported answers. This is a snapshot for reflection, not a prediction of success.'));
 const right=make('div',undefined,'results-summary');right.append(make('span','YOUR CURRENT PROFILE','assessment-eyebrow'),make('h2','Build with more clarity.'));
-right.append(make('p','Your strongest reported area is '+strength.label.toLowerCase()+'. Your first growth opportunity is '+focus.label.toLowerCase()+'.'));
+right.append(make('p',insights.summary));
 hero.append(left,right);root.append(hero);
-const insight=make('section',undefined,'assessment-key-insights');insight.setAttribute('aria-label','Your key takeaways');const strengthCard=make('article');strengthCard.append(make('span','YOUR STRONGEST AREA','assessment-eyebrow'),make('h3',strength.label),make('p','This is the area you rated most confidently. Keep building on it.'));const focusCard=make('article');focusCard.append(make('span','YOUR NEXT PRIORITY','assessment-eyebrow'),make('h3',focus.label),make('p',focus.advice));insight.append(strengthCard,focusCard);root.append(insight);root.append(make('h2','Your four founder dimensions'));
+const insight=make('section',undefined,'assessment-key-insights');insight.setAttribute('aria-label','Your key takeaways');const strengthCard=make('article');strengthCard.append(make('span',insights.balanced?'YOUR CURRENT BALANCE':'YOUR HIGHEST RATINGS','assessment-eyebrow'),make('h3',insights.strengthTitle),make('p',insights.strengthNote));const focusCard=make('article');focusCard.append(make('span','YOUR NEXT PRIORITY','assessment-eyebrow'),make('h3',insights.priorityTitle),make('p',insights.planAdvice));insight.append(strengthCard,focusCard);root.append(insight);root.append(make('h2','Your four founder dimensions'));
 const grid=make('div',undefined,'result-grid');scores.forEach(d=>grid.append(resultCard(d)));root.append(grid);
 const plan=make('section',undefined,'action-plan');plan.append(make('span','YOUR NEXT 7 DAYS','assessment-eyebrow'),make('h2','Turn insight into action.'));
 const list=make('ol');[
-'Day 1: '+focus.advice,
+'Day 1: '+insights.planAdvice,
 'Days 2 and 3: Complete one small action related to this priority. Record what actually happened.',
 'Days 4 and 5: Ask one relevant person for feedback and compare it with your assumptions.',
 'Days 6 and 7: Review what changed, choose one measurable next step, and set a date to revisit it.'
 ].forEach(item=>list.append(make('li',item)));plan.append(list);root.append(plan);
 const controls=actionRow();
-controls.append(button('Download results','primary-action',()=>download({scores,overall,focus,strength})));
+controls.append(button('Download results','primary-action',()=>download({scores,overall,insights})));
 let saved=false;
 const save=button('Save to my account','secondary-action',async()=>{
  save.disabled=true;save.textContent='Saving…';
@@ -119,8 +119,8 @@ async function showHistory(){
   target.append(list);
  }catch(error){target.replaceChildren(make('p','Saved assessment history is unavailable right now.'));}
 }
-function download({scores,overall,focus,strength}){
-const lines=['FounderDNA | Founder Reflection Profile','Date: '+new Date().toLocaleDateString(),'Overall reflection score: '+overall+'%','',...scores.flatMap(d=>[d.label+': '+d.score+'%',d.advice,'']),'Strongest reported area: '+strength.label,'First growth opportunity: '+focus.label,'','This is a self-reported reflection tool, not a validated diagnostic or prediction of business success.'];
+function download({scores,overall,insights}){
+const lines=['FounderDNA | Founder Reflection Profile','Date: '+new Date().toLocaleDateString(),'Overall reflection score: '+overall+'%','',...scores.flatMap(d=>[d.label+': '+d.score+'%',d.advice,'']),insights.summary,'Suggested next step: '+insights.planAdvice,'','This is a self-reported reflection tool, not a validated diagnostic or prediction of business success.'];
 const url=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}));
 const a=make('a');a.href=url;a.download='FounderDNA-reflection-results.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }

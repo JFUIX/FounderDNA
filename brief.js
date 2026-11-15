@@ -70,9 +70,9 @@
    if(active!=='Share a Milestone')['milestone_title','milestone_story'].forEach(k=>delete data[k]);
    if(['Offer Your Expertise','Share a Milestone'].includes(active))['funding_path','funding_context'].forEach(k=>delete data[k]);
    const received=fd.ok(await fd.db.rpc('submit_business_brief',{p_action:$('#action').value,p_brief:data,p_files:uploaded,p_client_token:token}));
-   const receipt=received?.[0];if(!receipt?.request_id||!receipt.request_reference)throw Error('No receipt was returned. Keep your draft and check My Progress before retrying.');
+   const receipt=received?.[0];if(!receipt?.request_id||!receipt.request_reference)throw Error('No receipt was returned. Keep your draft and check Support requests before retrying.');
    clearTimeout(draftTimer);draftTimer=null;hasDraft=false;try{localStorage.removeItem(key);}catch{}$('#wizard-shell').hidden=true;$('#brief-receipt').hidden=false;$('#receipt-reference').textContent='Your reference: '+receipt.request_reference;$('#receipt-link').href='./requests.html?request='+encodeURIComponent(receipt.request_id);$('#brief-receipt').scrollIntoView();
-  }catch(err){if(uploaded.length){try{await fd.db.storage.from('founderdna-documents').remove(uploaded.map(f=>f.path));}catch{}}$('#brief-error').textContent='Your request was not confirmed: '+err.message+' Your device draft is kept. Check My Progress before retrying if the connection was interrupted.';}
+  }catch(err){if(uploaded.length){try{await fd.db.storage.from('founderdna-documents').remove(uploaded.map(f=>f.path));}catch{}}$('#brief-error').textContent='Your request was not confirmed: '+err.message+' Your device draft is kept. Check Support requests before retrying if the connection was interrupted.';}
   finally{b.disabled=false;b.textContent='Send for private review ↗';}
  };
  configure();show();
