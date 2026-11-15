@@ -45,11 +45,10 @@
     }
    }
    if(validScores(latest)){
-    const weakest=Object.keys(names).reduce((min,key)=>latest.dimension_scores[key]<latest.dimension_scores[min]?key:min,'clarity');
-    $('#priority-title').textContent='Focus on '+names[weakest].toLowerCase()+'.';
-    const strongest=Object.keys(names).reduce((max,key)=>latest.dimension_scores[key]>latest.dimension_scores[max]?key:max,'clarity');
-    const strength=$('#priority-strength');if(strength)strength.textContent='Your strongest area right now: '+names[strongest]+'.';
-    $('#priority-description').textContent=actions[weakest];
+    const insights=window.FDScoreInsights(Object.keys(names).map(key=>({label:names[key],score:latest.dimension_scores[key],advice:actions[key]})));
+    $('#priority-title').textContent=insights.priorityTitle;
+    const strength=$('#priority-strength');if(strength)strength.textContent=insights.summary;
+    $('#priority-description').textContent=insights.planAdvice;
     $('#priority-section').hidden=false;
     $('#dimensions-section').hidden=false;
     const compare=$('#dimensions');compare.replaceChildren();

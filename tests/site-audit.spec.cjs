@@ -9,7 +9,7 @@ for(const name of ['index','about','privacy','assessment','dashboard','brief','r
  test(name+': accessible public shell, modal, navigation and responsive layout',async({page,request})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+name+'.html');
-  for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
+  for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);for(const link of await page.locator('.main-nav > a:visible, .main-nav > button:visible').all())await expect(link).toBeInViewport({ratio:1});}
   const links=await page.locator('a[href]').evaluateAll(links=>[...new Set(links.map(a=>a.getAttribute('href')).filter(h=>h?.startsWith('./')&&!h.startsWith('./#')))]);
   for(const href of links){const response=await request.get(new URL(href,base).href);expect(response.status(),href).toBeLessThan(400);}
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','best-practice']).analyze()).violations).toEqual([]);
@@ -73,6 +73,7 @@ test('brief ignores inactive portfolio fields and clears drafts after receipt',a
  await page.locator('#brief-next').click();await page.locator('#brief-next').click();
  await page.locator('#review_consent').check();await page.locator('#contact_name').fill('Example founder');
  await page.locator('#brief-submit').click();await expect(page.locator('#brief-receipt')).toBeVisible();
+ await expect(page.locator('#receipt-expectations')).toContainText('we do not send update emails');
  await page.reload();expect(await page.evaluate(()=>localStorage.getItem('fd-private-brief-v1'))).toBeNull();
 });
 test('assessment result heading receives focus and saving cannot create duplicates',async({page})=>{
@@ -128,4 +129,37 @@ test('review status recovers to the latest confirmed value after a failed change
  await page.evaluate(()=>window.qaFailStatus=true);await select.selectOption('Closed');await expect(select).toHaveValue('In review');
  await expect(page.locator('#site-toast')).toContainText('Network interrupted');
  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','best-practice']).analyze()).violations).toEqual([]);
+});
+for(const [answer,percent] of [[0,0],[2,50],[4,100]]){
+ test('equal '+percent+'% scores stay balanced in results and download',async({page})=>{
+  await mock(page);await page.goto(base+'assessment.html');
+  for(let i=0;i<12;i++){await page.locator('.answer').nth(answer).click();await page.getByRole('button',{name:i===11?'View my results':'Next question',exact:true}).click();}
+  await expect(page.locator('.results-summary')).toContainText('evenly rated at '+percent+'%');
+  await expect(page.locator('.assessment-key-insights')).toContainText('Choose your next focus');
+  const [file]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download results',exact:true}).click()]);
+  const text=fs.readFileSync(await file.path(),'utf8');expect(text).toContain('evenly rated at '+percent+'%');expect(text).not.toContain('Strongest reported area:');
+ });
+}
+test('partial ties name all equally rated areas and leave a choice of focus',async({page})=>{
+ await mock(page);await page.goto(base+'assessment.html');
+ for(let i=0;i<12;i++){await page.locator('.answer').nth(i<6?1:3).click();await page.getByRole('button',{name:i===11?'View my results':'Next question',exact:true}).click();}
+ await expect(page.locator('.results-summary')).toContainText('equally highest-rated areas');
+ await expect(page.locator('.results-summary')).toContainText('Execution & prioritization · Learning & adaptability');
+ await expect(page.locator('.results-summary')).toContainText('Direction & clarity · Customer validation');
+ await expect(page.locator('.assessment-key-insights')).toContainText('Choose between equally rated areas');
+});
+test('saved dashboard results use the same balanced-score explanation',async({page})=>{
+ await mock(page,mockSupabaseUMD.replace('clarity:75,validation:50,execution:100,resilience:75','clarity:50,validation:50,execution:50,resilience:50'));
+ await page.goto(base+'dashboard.html');await expect(page.locator('#priority-title')).toHaveText('Choose your next focus');
+ await expect(page.locator('#priority-strength')).toContainText('evenly rated at 50%');
+});
+test('support contact and separate account destinations are visible without sign-in',async({page})=>{
+ await page.goto(base+'index.html');await expect(page.locator('.main-nav a[href="./dashboard.html"]')).toHaveText('Dashboard');await expect(page.locator('.main-nav a[href="./requests.html"]')).toHaveText('Support requests');
+ await page.locator('[data-auth]').click();await expect(page.locator('#site-auth a[href^="mailto:"]')).toBeVisible();
+ await page.goto(base+'about.html');await expect(page.locator('main a[href^="mailto:business.jaffery@gmail.com"]')).toBeVisible();
+});
+test('mobile homepage is shorter and the first business input is in the initial viewport',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto(base);
+ expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThan(10000);
+ await page.goto(base+'brief.html');const box=await page.locator('#business').boundingBox();expect(box.y+box.height).toBeLessThan(844);
 });

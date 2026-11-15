@@ -5,7 +5,7 @@
   $('#refresh-requests').disabled=true;$('#requests-state').textContent='Loading your private requests...';
   try{
    await fd.ready;$('#request-list').replaceChildren();$('#dna-snapshot').replaceChildren();
-   if(!fd.user){$('#requests-state').textContent='Sign in with the email used for your requests. Your briefs and contact information are private.';$('#request-list').append(fd.button('Sign in to My Progress',fd.signIn,'btn'));return;}
+   if(!fd.user){$('#requests-state').textContent='Sign in with the email used for your requests. Your briefs and contact information are private.';$('#request-list').append(fd.button('Sign in to Support requests',fd.signIn,'btn'));return;}
    let query=fd.db.from('business_requests').select('*').eq('user_id',fd.user.id).order('created_at',{ascending:false}).limit(100);
    const id=new URLSearchParams(location.search).get('request');if(id&&/^[a-f0-9-]{36}$/i.test(id))query=query.eq('id',id);
    const data=fd.ok(await query);$('#requests-state').textContent=data.length?'Your saved requests. Refresh here for team responses and next steps.':'No requests found for this account. Start a brief to tell us what would help.';
