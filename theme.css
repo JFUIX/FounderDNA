@@ -1,0 +1,50 @@
+/* Warm burgundy surfaces shared by every FounderDNA page. Print stays unchanged. */
+@media screen {
+ :root{--bg:#1b0a10;--surface:#2a111a;--panel:#2a111a;--raised:#351620;--line:#59303e;--ink:#fff7fa;--muted:#cfbbc3;--gold:#f4b2bf}
+ body{background:var(--bg);color:var(--ink)}
+ .site-head,.top{background:#220c15;border-bottom-color:#59303e}
+ .footer{background:#240c15;border-top-color:#59303e}
+ .community-footer{border-top-color:#59303e}
+ .pillar,.action-card,.fund-card,.dna-card,.panel,.request-card,.form-steps,.example,
+ .assessment-panel,.dashboard-card,.task-panel,.fd-journey-grid article{
+  background:linear-gradient(145deg,#30121e,#241018);border-color:#603444;
+  box-shadow:0 14px 38px #0d030640,inset 0 1px 0 #ffbdcc08;
+ }
+ .btn.secondary:hover,.btn.quiet:hover{background:#411c2b;border-color:#b0788b}
+ .progress-track,.metric-track,.dashboard-track{background:#633344}
+ .action-card:hover,.pillar:hover{background:#391520;border-color:#a65369}
+ .result-card,.history-item,.assessment-key-insights article,.dashboard-entry,
+ .task-item,.checkin-entry,.report-stat,.report-notes article{
+  background:#32151f;border-color:#67404d;
+ }
+ .answer{background:#32151f;border-color:#765060}
+ .answer:hover{background:#411c2b;border-color:#ce788f}
+ .answer[aria-pressed="true"]{background:#5d1b2e;border-color:#ff8da5}
+ .action-plan,.dashboard-priority{background:linear-gradient(120deg,#471526,#2a111b);border-color:#8d455a}
+ .dashboard-status,.brief-guide,.response-expectations{background:#35121f;border-left-color:#ff8da5}
+ .form-steps li.active{background:#531c30;border-left-color:#ff6b8b}
+ .pillar .number,.left>.eyebrow{color:#d6aeba}
+ input:not([type=checkbox]):not([type=radio]),textarea,select{
+  background:#210d15;border-color:#765060;color:#fff7fa;
+ }
+ input::placeholder,textarea::placeholder{color:#bca4ae}
+ dialog{background:#2a111b;border-color:#805062}
+ dialog::backdrop{background:#10040ad9}
+ .intro,.community-note,.empty{border-color:#59303e}
+ .badge,.tag{border-color:#805062}
+ .reply,.notification{border-color:#67404d}
+ .notification.unread{background:#471526}
+ .hero.founder-texture-hero::before{
+  background:linear-gradient(180deg,#1b0a10 0%,#1b0a101a 22%,#1b0a1014 62%,#1b0a10 100%),
+   linear-gradient(90deg,#1b0a10d9,#350b1959),
+   url('assets/founderdna-hero.webp') center 42%/cover no-repeat;
+  background-color:#38101f;
+ }
+ .hero.founder-texture-hero .btn.secondary{background:#2a0d1980;border-color:#cf9eaf}
+}
+@media screen and (max-width:760px){
+ .hero.founder-texture-hero::before{
+  background-image:linear-gradient(180deg,#1b0a10 0%,#1b0a101a 22%,#1b0a1014 62%,#1b0a10 100%),
+   linear-gradient(90deg,#1b0a10d9,#350b1959),url('assets/founderdna-hero-mobile.webp');
+ }
+}

@@ -33,7 +33,7 @@ Backend behavior and access policies must be tested in a configured environment 
 Static HTML, CSS and JavaScript on GitHub Pages; Supabase client for existing optional support features.
 
 ## Design
-Permanent dark theme: `#050505`, `#C70102`, `#C80000`, and `#FFFFFF`.
+Dark burgundy backgrounds (`#1b0a10`) and warm raised surfaces, with vivid red accents and light text. The shared `theme.css` keeps all pages consistent and blends the hero artwork into the page background.
 
 ## Development and QA
 1. Test assessment keyboard navigation, zero-valued answers, previous/next, completion, retake, and print.
