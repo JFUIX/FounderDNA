@@ -222,3 +222,6 @@ body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relativ
 .prose a.btn{color:#fff}
 
 .request-card>h2{font-size:22px;font-weight:600}.request-card>h3,.request-card>section>h3{font-size:17px}.update>strong{color:#ff7373}
+
+@font-face{font-family:FounderSymbols;src:url('assets/fonts/arrows.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+2190-2199}
+:root{font-family:'DM Sans',FounderSymbols,Arial,sans-serif}
