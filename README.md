@@ -5,6 +5,10 @@ FounderDNA is a founder self-assessment and practical business-support platform.
 **Live site:** https://jfuix.github.io/FounderDNA/  
 **Assessment:** https://jfuix.github.io/FounderDNA/assessment.html
 
+## Project preview
+
+[![FounderDNA homepage showing the founder assessment and business-support platform](Screenshots/screenshot-half.png)](https://jfuix.github.io/FounderDNA/)
+
 ## Assessment
 - 12 self-reflection questions covering direction, customer validation, execution, and adaptability
 - Five answer choices per question, scored from 0 to 4
