@@ -15,7 +15,7 @@ const questions=[
 const options=['Not yet','Just starting','Somewhat','Mostly','Consistently'];
 const answers=Array(questions.length).fill(null);let step=0;
 const draftKey='founderdna-assessment-pending-v1';
-try{const pending=JSON.parse(localStorage.getItem(draftKey)||'null');if(pending&&Date.now()-pending.at<30*60*1000&&Array.isArray(pending.answers)&&pending.answers.length===12&&pending.answers.every(v=>Number.isInteger(v)&&v>=0&&v<=4)){answers.splice(0,12,...pending.answers);step=12;}localStorage.removeItem(draftKey);}catch{}
+try{const pending=JSON.parse(localStorage.getItem(draftKey)||'null');if(pending&&Number.isFinite(pending.at)&&Date.now()-pending.at>=0&&Date.now()-pending.at<30*60*1000&&Array.isArray(pending.answers)&&pending.answers.length===12&&pending.answers.every(v=>Number.isInteger(v)&&v>=0&&v<=4)){answers.splice(0,12,...pending.answers);step=12;}localStorage.removeItem(draftKey);}catch{}
 
 const root=document.getElementById('assessment-content');root.tabIndex=-1;
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
@@ -29,7 +29,7 @@ return {scores,overall:Math.round(answers.reduce((sum,a)=>sum+a,0)/(answers.leng
 function actionRow(){const row=make('div',undefined,'assessment-controls');root.append(row);return row;}
 function render(){
 root.replaceChildren();
-if(step===questions.length){results();return;}
+if(step===questions.length){results();root.querySelector('h2').tabIndex=-1;return;}
 const label=make('div',dimensions.find(d=>d.id===questions[step][0]).label.toUpperCase()+' · QUESTION '+String(step+1).padStart(2,'0')+' / '+questions.length,'assessment-eyebrow');
 const progress=make('div',undefined,'progress-track');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label','Assessment progress');progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(questions.length));progress.setAttribute('aria-valuenow',String(step));const fill=make('div',undefined,'progress-fill');fill.style.width=(step/questions.length*100)+'%';progress.append(fill);
 const heading=make('h2',questions[step][1]);heading.id='question-title';
@@ -66,6 +66,7 @@ const list=make('ol');[
 ].forEach(item=>list.append(make('li',item)));plan.append(list);root.append(plan);
 const controls=actionRow();
 controls.append(button('Download results','primary-action',()=>download({scores,overall,focus,strength})));
+let saved=false;
 const save=button('Save to my account','secondary-action',async()=>{
  save.disabled=true;save.textContent='Saving…';
  try{
@@ -80,10 +81,10 @@ const save=button('Save to my account','secondary-action',async()=>{
   const payload={user_id:userResult.data.user.id,overall_score:overall,dimension_scores:Object.fromEntries(scores.map(d=>[d.id,d.score])),answers:[...answers]};
   const response=await window.FD.db.from('assessment_results').insert(payload);
   if(response.error)throw response.error;
-  save.textContent='Saved to your account';
+  saved=true;save.textContent='Saved to your account';
   await showHistory();
  }catch(error){save.textContent='Save to my account';window.FD?.notify(error.message||'Could not save. Please try again.');}
- finally{save.disabled=false;}
+ finally{save.disabled=saved;}
 });
 controls.append(save);
 controls.append(button('Print / save PDF','secondary-action',()=>window.print()));

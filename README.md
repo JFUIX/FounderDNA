@@ -77,3 +77,7 @@ The private dashboard now includes a consolidated report of recent assessment re
 ## Production readiness QA expansion
 
 The Playwright workflow now runs on changes to `progress-report.js`, `site.js`, and `community-config.js`, not only assessment and dashboard HTML/JS. Added an authenticated dashboard integration smoke test using an in-browser mocked Supabase client to cover task creation/completion, weekly check-in saving, and Markdown report export. **Mocked tests do not verify real Supabase authentication, email delivery, or RLS isolation.** The three private tables' owner-only SELECT/INSERT/UPDATE/DELETE policies were inspected in the live database. The real two-account isolation and magic-link flows remain pending manual verification.
+
+## Full-site audit (15 November 2026)
+
+See [the audit report](AUDIT-2026-11-15.md) for findings, fixes, measured results, database checks and remaining release gates. Install pinned test dependencies with `npm ci`, install Chromium with `npx playwright install --with-deps chromium`, then run `npm test`; the test configuration starts the local server automatically. CI now runs the full assessment and site audit suites on pull requests. Live email sign-in and physical-device certification remain separate release checks.

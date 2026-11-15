@@ -86,6 +86,10 @@
   status.hidden=true;content.hidden=false;
   await Promise.all([initializeTasks(db,auth.data.user.id),initializeCheckins(db,auth.data.user.id)]);
  }catch(error){status.textContent='Your private dashboard could not load. Please refresh or try again later.';console.error('FounderDNA dashboard:',error);}
+async function mutate(control,work,fail){
+ control.disabled=true;
+ try{await work();}catch(error){fail(error.message||'Please try again.');}finally{control.disabled=false;}
+}
 async function initializeTasks(db,userId){
  const form=$('#task-form'),list=$('#task-list'),message=$('#task-message');
  const report=msg=>{message.textContent=msg;};
@@ -98,21 +102,23 @@ async function initializeTasks(db,userId){
   report(tasks.length?done+' of '+tasks.length+' recent tasks completed'+(tasks.length===100?' (showing latest 100)':'')+'.':'Add your first action to start building momentum.');
   for(const task of tasks){
    const row=text('div','','task-item'+(task.completed?' is-done':''));
-   const check=document.createElement('input');check.type='checkbox';check.checked=task.completed;check.setAttribute('aria-label','Mark '+task.title+' complete');
+   const check=document.createElement('input');check.type='checkbox';check.checked=task.completed;check.setAttribute('aria-label','Mark '+task.title+(task.completed?' incomplete':' complete'));
    check.addEventListener('change',async()=>{
-    check.disabled=true;
+    await mutate(check,async()=>{
     const {error}=await db.from('founder_action_tasks').update({completed:check.checked,updated_at:new Date().toISOString()}).eq('id',task.id);
-    if(error){check.checked=!check.checked;report('Could not update task: '+error.message);}
-    await load();
+    if(error)throw error;
+    await load();window.dispatchEvent(new Event("fd:progress-changed"));
+    },error=>{check.checked=!check.checked;report('Could not update task: '+error);});
    });
    const details=text('div','','task-details');details.append(text('strong',task.title));if(task.goal)details.append(text('small','Goal: '+task.goal));
    const remove=text('button','Delete');remove.type='button';remove.setAttribute('aria-label','Delete task '+task.title);
    remove.addEventListener('click',async()=>{
     if(!confirm('Delete this task?'))return;
-    remove.disabled=true;
+    await mutate(remove,async()=>{
     const {error}=await db.from('founder_action_tasks').delete().eq('id',task.id);
-    if(error){remove.disabled=false;report('Could not delete task: '+error.message);return;}
-    await load();
+    if(error)throw error;
+    await load();window.dispatchEvent(new Event("fd:progress-changed"));
+    },error=>report('Could not delete task: '+error));
    });
    row.append(check,details,remove);list.append(row);
   }
@@ -121,11 +127,12 @@ async function initializeTasks(db,userId){
   event.preventDefault();
   const title=$('#task-title').value.trim(),goal=$('#task-goal').value.trim();
   if(!title||title.length>180||goal.length>240){report('Please check your task title and goal.');return;}
-  const submit=form.querySelector('button[type="submit"]');submit.disabled=true;
+  const submit=form.querySelector('button[type="submit"]');
+  await mutate(submit,async()=>{
   const {error}=await db.from('founder_action_tasks').insert({user_id:userId,title,goal});
-  submit.disabled=false;
-  if(error){report('Could not save task: '+error.message);return;}
-  form.reset();await load();
+  if(error)throw error;
+  form.reset();await load();window.dispatchEvent(new Event("fd:progress-changed"));
+  },error=>report('Could not save task: '+error));
  });
  await load();
 }
@@ -153,10 +160,11 @@ async function initializeCheckins(db,userId){
    const remove=text('button','Delete reflection');remove.type='button';
    remove.addEventListener('click',async()=>{
     if(!confirm('Delete this weekly reflection?'))return;
-    remove.disabled=true;
+    await mutate(remove,async()=>{
     const {error}=await db.from('founder_weekly_checkins').delete().eq('id',item.id);
-    if(error){message.textContent='Could not delete: '+error.message;remove.disabled=false;return;}
-    await load();
+    if(error)throw error;
+    await load();window.dispatchEvent(new Event("fd:progress-changed"));
+    },error=>{message.textContent='Could not delete: '+error;});
    });
    article.append(remove);history.append(article);
   }
@@ -165,11 +173,12 @@ async function initializeCheckins(db,userId){
   event.preventDefault();
   const values=Object.fromEntries(Object.entries(fields).map(([key,input])=>[key,input.value.trim()]));
   if(!Object.values(values).some(Boolean)){message.textContent='Write at least one reflection before saving.';return;}
-  const submit=form.querySelector('button[type="submit"]');submit.disabled=true;
+  const submit=form.querySelector('button[type="submit"]');
+  await mutate(submit,async()=>{
   const {error}=await db.from('founder_weekly_checkins').upsert({user_id:userId,week_start:currentWeek,...values,updated_at:new Date().toISOString()},{onConflict:'user_id,week_start'});
-  submit.disabled=false;
-  if(error){message.textContent='Could not save reflection: '+error.message;return;}
-  await load();
+  if(error)throw error;
+  await load();window.dispatchEvent(new Event("fd:progress-changed"));
+  },error=>{message.textContent='Could not save reflection: '+error;});
  });
  await load();
 }
