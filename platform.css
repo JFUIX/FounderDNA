@@ -269,3 +269,6 @@ body:has(.hero.founder-texture-hero) .hero.founder-texture-hero{position:relativ
  .footer .wrap{display:flex;flex-direction:column;align-items:flex-start;gap:24px}
  .footer nav{margin-left:0;justify-content:flex-start;gap:12px 20px}
 }
+
+/* Align footer navigation with the tagline beneath the wordmark. */
+@media(min-width:761px){.footer-identity+nav{align-self:end;line-height:1.6}}
