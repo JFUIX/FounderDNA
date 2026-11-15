@@ -34,6 +34,7 @@
   $('#contact-account').textContent=fd.user?'Follow-up will use your verified sign-in email: '+fd.user.email+'. Your contact details remain private.':'Sign in to submit. Your verified sign-in email will be used for follow-up.';
   configure();
  }
+ function focusStep(){const heading=$('.wizard-step:not([hidden]) h2');if(heading){heading.tabIndex=-1;heading.focus();}}
  function show(){document.querySelectorAll('.wizard-step').forEach(n=>n.hidden=Number(n.dataset.step)!==step);document.querySelectorAll('#wizard-steps li').forEach((n,i)=>{n.classList.toggle('active',i===step);if(i===step)n.setAttribute('aria-current','step');else n.removeAttribute('aria-current');});$('#brief-back').hidden=step===0;$('#brief-next').hidden=step===3;$('#brief-submit').hidden=step!==3;$('#brief-step-label').textContent='Step '+(step+1)+' of 4';$('#brief-error').textContent='';if(step===3)summary();}
  function valid(which){
   let required=which===0?['business','stage']:which===1?['situation','outcome']:[];
@@ -42,16 +43,16 @@
   if(which===2&&$('#action').value==='Find a Collaborator')required=['collaborator_role'];
   if(which===2&&$('#action').value==='Ask an Expert')required=['expert_question'];
   for(const id of required)if(!$('#'+id).value.trim()){$('#brief-error').textContent='Please complete '+(labels[id]||id).toLowerCase()+'.';$('#'+id).focus();return false;}
-  for(const id of ['website','portfolio_link']){const value=$('#'+id).value.trim();if(value){try{const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)throw Error();}catch{$('#brief-error').textContent='Website and portfolio links must be valid HTTPS addresses without login details.';step=id==='website'?0:2;show();$('#brief-error').textContent='Please use a valid HTTPS address.';$('#'+id).focus();return false;}}}
+  for(const id of (which===0?['website']:which===2&&$('#action').value==='Offer Your Expertise'?['portfolio_link']:[])){const value=$('#'+id).value.trim();if(value){try{const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)throw Error();}catch{$('#brief-error').textContent='Website and portfolio links must be valid HTTPS addresses without login details.';step=id==='website'?0:2;show();$('#brief-error').textContent='Please use a valid HTTPS address.';$('#'+id).focus();return false;}}}
   return true;
  }
- let draftTimer;fields.forEach(k=>$('#'+k).addEventListener('input',()=>{clearTimeout(draftTimer);draftTimer=setTimeout(save,450);}));addEventListener('pagehide',()=>{if(draftTimer){clearTimeout(draftTimer);save();}});$('#action').onchange=()=>{configure();save();};['cv','portfolio'].forEach(k=>$('#'+k).onchange=()=>{configure();if(step===3)summary();});
- $('#brief-next').onclick=()=>{if(valid(step)){clearTimeout(draftTimer);step++;show();save();$('#wizard-shell').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}};$('#brief-back').onclick=()=>{step=Math.max(0,step-1);show();save();};
- $('#clear-brief').onclick=()=>{clearTimeout(draftTimer);draftTimer=null;if(!confirm('Clear this private device draft?'))return;try{localStorage.removeItem(key);}catch{}form.reset();token=crypto.randomUUID();step=0;hasDraft=false;configure();show();$('#brief-draft-status').textContent='Draft cleared. Nothing has been sent.';};
+ let draftTimer;fields.forEach(k=>$('#'+k).addEventListener('input',()=>{clearTimeout(draftTimer);draftTimer=setTimeout(save,450);}));addEventListener('pagehide',()=>{if(draftTimer){clearTimeout(draftTimer);draftTimer=null;save();}});$('#action').onchange=()=>{configure();save();};['cv','portfolio'].forEach(k=>$('#'+k).onchange=()=>{configure();if(step===3)summary();});
+ $('#brief-next').onclick=()=>{if(valid(step)){clearTimeout(draftTimer);draftTimer=null;step++;show();focusStep();save();$('#wizard-shell').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}};$('#brief-back').onclick=()=>{step=Math.max(0,step-1);show();focusStep();save();};
+ $('#clear-brief').onclick=()=>{if(!confirm('Clear this private device draft?'))return;clearTimeout(draftTimer);draftTimer=null;try{localStorage.removeItem(key);}catch{}form.reset();token=crypto.randomUUID();step=0;hasDraft=false;configure();show();$('#brief-draft-status').textContent='Draft cleared. Nothing has been sent.';};
  $('#download-business-brief').onclick=()=>{summary();const text='FOUNDERDNA / PRIVATE BRIEF\n\n'+[...$('#brief-summary').children].map(n=>n.textContent).join('\n\n')+'\n\nThis download does not send or publish the brief.';const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='FounderDNA-private-brief.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  async function fileData(input,kind,group){const file=input.files[0];if(!file)return null;if(file.size>2097152)throw Error(kind+' must be no more than 2 MB.');if(!file.name.toLowerCase().endsWith('.pdf'))throw Error(kind+' must be a PDF.');const header=new TextDecoder().decode(await file.slice(0,5).arrayBuffer());if(header!=='%PDF-')throw Error(kind+' does not appear to be a valid PDF.');const path=fd.user.id+'/'+group+'/'+crypto.randomUUID()+'.pdf';fd.ok(await fd.db.storage.from('founderdna-documents').upload(path,file,{contentType:'application/pdf',upsert:false}));return {kind,path,name:file.name.slice(0,150),size:file.size};}
  form.onsubmit=async e=>{
-  e.preventDefault();for(let i=0;i<3;i++)if(!valid(i)){step=i;show();$('#brief-error').textContent='Please complete the required information in this step.';return;}
+  e.preventDefault();const previousStep=step;for(let i=0;i<3;i++){step=i;show();if(!valid(i))return;}step=previousStep;show();
   if(!$('#contact_name').value.trim()){$('#brief-error').textContent='Please add a private contact name.';$('#contact_name').focus();return;}
   if(!$('#review_consent').checked){$('#brief-error').textContent='Please approve private team review before sending.';return;}
   const withFiles=$('#action').value==='Offer Your Expertise'&&($('#cv').files.length||$('#portfolio').files.length);
@@ -70,7 +71,7 @@
    if(['Offer Your Expertise','Share a Milestone'].includes(active))['funding_path','funding_context'].forEach(k=>delete data[k]);
    const received=fd.ok(await fd.db.rpc('submit_business_brief',{p_action:$('#action').value,p_brief:data,p_files:uploaded,p_client_token:token}));
    const receipt=received?.[0];if(!receipt?.request_id||!receipt.request_reference)throw Error('No receipt was returned. Keep your draft and check My Progress before retrying.');
-   try{localStorage.removeItem(key);}catch{}$('#wizard-shell').hidden=true;$('#brief-receipt').hidden=false;$('#receipt-reference').textContent='Your reference: '+receipt.request_reference;$('#receipt-link').href='./requests.html?request='+encodeURIComponent(receipt.request_id);$('#brief-receipt').scrollIntoView();
+   clearTimeout(draftTimer);draftTimer=null;hasDraft=false;try{localStorage.removeItem(key);}catch{}$('#wizard-shell').hidden=true;$('#brief-receipt').hidden=false;$('#receipt-reference').textContent='Your reference: '+receipt.request_reference;$('#receipt-link').href='./requests.html?request='+encodeURIComponent(receipt.request_id);$('#brief-receipt').scrollIntoView();
   }catch(err){if(uploaded.length){try{await fd.db.storage.from('founderdna-documents').remove(uploaded.map(f=>f.path));}catch{}}$('#brief-error').textContent='Your request was not confirmed: '+err.message+' Your device draft is kept. Check My Progress before retrying if the connection was interrupted.';}
   finally{b.disabled=false;b.textContent='Send for private review ↗';}
  };

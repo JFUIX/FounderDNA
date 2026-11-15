@@ -1,0 +1,6 @@
+{
+  "name": "founderdna",
+  "private": true,
+  "scripts": {"test": "playwright test", "serve": "python3 -m http.server 8765 --bind 127.0.0.1"},
+  "devDependencies": {"@playwright/test": "1.56.1", "@axe-core/playwright": "4.10.2"}
+}

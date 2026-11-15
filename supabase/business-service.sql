@@ -134,11 +134,13 @@ alter table public.milestones add constraint approved_requires_consent check(pub
 drop policy "Public milestone feed" on public.milestones;
 drop policy "Own milestones only" on public.milestones;
 drop policy "Edit own milestones" on public.milestones;
-create policy "Approved milestones or own queue" on public.milestones for select to anon,authenticated using(publication_status='Approved' or user_id=(select auth.uid()));
-create policy "Review all milestones" on public.milestones for select to authenticated using((select service_private.is_reviewer()));
+-- One permissive policy per role/action avoids duplicate RLS evaluation.
+create policy "Public approved milestones" on public.milestones for select to anon using(publication_status='Approved');
+create policy "Read visible milestones" on public.milestones for select to authenticated using(publication_status='Approved' or user_id=(select auth.uid()) or (select service_private.is_reviewer()));
 create policy "Submit consented milestone" on public.milestones for insert to authenticated with check(user_id=(select auth.uid()) and publication_consent and publication_status='Pending');
-create policy "Edit own pending milestone" on public.milestones for update to authenticated using(user_id=(select auth.uid())) with check(user_id=(select auth.uid()) and publication_status='Pending' and publication_consent);
-create policy "Moderate milestones" on public.milestones for update to authenticated using((select service_private.is_reviewer())) with check((select service_private.is_reviewer()));
+create policy "Edit or moderate milestones" on public.milestones for update to authenticated
+using(user_id=(select auth.uid()) or (select service_private.is_reviewer()))
+with check((user_id=(select auth.uid()) and publication_status='Pending' and publication_consent) or (select service_private.is_reviewer()));
 grant insert(publication_consent),update(publication_consent,publication_status) on public.milestones to authenticated;
 create or replace function community_private.stamp_milestone_edit() returns trigger language plpgsql security invoker set search_path='' as $$
 begin

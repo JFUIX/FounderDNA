@@ -39,7 +39,7 @@
   }
   function resetComposer(clearBusiness=false){
     clearTimeout(composerSaveTimer);composerSaveTimer=null;
-    editing=null;$('#headline').value='';$('#story').value='';$('#category').value='Launch';
+    editing=null;$('#milestone-consent').checked=false;$('#headline').value='';$('#story').value='';$('#category').value='Launch';
     if(clearBusiness)$('#business').value='';
     try{localStorage.removeItem(draftKey);}catch{}
     $('#draft-status').textContent='Drafts save on this device for 7 days.';updateComposer();

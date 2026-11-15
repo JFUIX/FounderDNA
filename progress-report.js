@@ -8,16 +8,21 @@
  const validScore=n=>Number.isInteger(n)&&n>=0&&n<=100;
  const date=v=>new Date(v).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
  const esc=s=>String(s??'').replaceAll('\\','\\\\').replaceAll('\n',' ');
+ let version=0;
+ async function refresh(){
+ const current=++version;download.disabled=true;print.disabled=true;
+ status.textContent="Updating your private report…";
  try{
   await window.FD.ready;
   const auth=await window.FD.db.auth.getUser();
-  if(auth.error||!auth.data.user)return;
+  if(auth.error||!auth.data.user){status.textContent='Sign in to view your private report.';return;}
   const db=window.FD.db;
   const [a,t,w]=await Promise.all([
    db.from('assessment_results').select('overall_score,dimension_scores,created_at').order('created_at',{ascending:false}).limit(100),
    db.from('founder_action_tasks').select('title,goal,completed,created_at').order('created_at',{ascending:false}).limit(100),
    db.from('founder_weekly_checkins').select('week_start,win,challenge,lesson,next_focus').order('week_start',{ascending:false}).limit(52)
   ]);
+  if(current!==version)return;
   if(a.error||t.error||w.error)throw a.error||t.error||w.error;
   const assessments=(a.data||[]).filter(x=>validScore(x.overall_score));
   const tasks=t.data||[],checkins=w.data||[];
@@ -60,14 +65,17 @@
    '',
    'Personal reflection only. Not a prediction or objective business-performance assessment.'
   ].join('\n');
-  download.addEventListener('click',()=>{
+  download.onclick=()=>{
    const blob=new Blob([exportText()],{type:'text/markdown;charset=utf-8'});
    const url=URL.createObjectURL(blob),link=document.createElement('a');
    link.href=url;link.download='FounderDNA-progress-report.md';document.body.append(link);link.click();link.remove();
    setTimeout(()=>URL.revokeObjectURL(url),1500);
-  });
-  print.addEventListener('click',()=>window.print());
+  };
+  print.onclick=()=>window.print();
   download.disabled=false;print.disabled=false;
   status.textContent='Your private report is ready. The download stays on your device.';
- }catch(error){status.textContent='Report unavailable. Please try again later.';console.error('FounderDNA report:',error);}
+ }catch(error){if(current!==version)return;status.textContent='Report unavailable. Please try again later.';console.error('FounderDNA report:',error);}
+ }
+ window.addEventListener("fd:progress-changed",refresh);
+ await refresh();
 })();
